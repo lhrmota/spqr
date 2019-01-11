@@ -42,12 +42,11 @@ def setupDB():
     xbmc.log("DB file:"+database)
     
     # value should be 1 or -1, depending on being up or downvote. No booleans in SQLite! 
-    sql_create_votes_table = 
-      """ CREATE TABLE IF NOT EXISTS unfulfilledVotes (
+    sql_create_unfulfilledvotes_table = """ CREATE TABLE IF NOT EXISTS unfulfilledVotes (
              user text NOT NULL,
              songid integer NOT NULL,
-             value integer NOT NULL); 
-          CREATE TABLE IF NOT EXISTS fulfilledVotes (
+             value integer NOT NULL);"""
+    sql_create_fulfilledvotes_table = """CREATE TABLE IF NOT EXISTS fulfilledVotes (
              user text NOT NULL,
              songid integer NOT NULL,
              value integer NOT NULL,
@@ -56,8 +55,9 @@ def setupDB():
     # create a database connection
     conn = create_connection(database)
     if conn is not None:
-        # create projects table
-        create_table(conn, sql_create_votes_table)
+        # create votes tables
+        create_table(conn, sql_create_unfulfilledvotes_table)
+        create_table(conn, sql_create_fulfilledvotes_table)
     else:
         xbmc.log("Error: cannot create the database connection.")
         
@@ -108,7 +108,7 @@ def insertVote(conn,songid,user,value):
          conn.commit()
          xbmc.log("Insertion finished")
          # launch notification to update clients
-         notifyVote(conn)
+         notifyVotes(conn)
          # immediately deorder playlist? Maybe not, could cause instability with many users...
       except Error as e:
          xbmc.log("Error: cannot insert into votes"+' '.join(e))
@@ -116,7 +116,7 @@ def insertVote(conn,songid,user,value):
    else:
       xbmc.log("Error: cannot insert into votes: no connection available")
 
-def notifyVote(conn):
+def notifyVotes(conn):
    """Notify all subscribed connections that votes were altered"""
    try:
    	# get all votes from DB, grouped by songid
@@ -143,7 +143,7 @@ def notifyVote(conn):
          jsonDataDown[row[0]]=row[1]
 
 
-      jsonData={"up":jsonDataUp,"down",jsonDataDown}
+      jsonData={"up":jsonDataUp,"down":jsonDataDown}
 
       xbmc.executeJSONRPC('{ "jsonrpc": "2.0", "method": "JSONRPC.NotifyAll", "id":"JSONRPC.NotifyAll","params":{"sender":"SPQR","message":"VoteUpdate","data":'+json.dumps(jsonData)+' }}')
    except Error as e:
@@ -194,5 +194,8 @@ if __name__ == '__main__':
           if params["directive"][0]=="downvote":
              insertVote(conn,params["arg1"][0],params["arg2"][0],-1)
           else:
-             xbmc.log("Unexpected directive:"+params["directive"][0])
+             if params["directive"][0]=="refreshVotes":
+                 notifyVotes(conn)
+             else:
+                 xbmc.log("Unexpected directive:"+params["directive"][0])
    	
