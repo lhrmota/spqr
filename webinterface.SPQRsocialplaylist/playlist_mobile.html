@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- adapted from https://forum.kodi.tv/showthread.php?tid=165814 -->
+<html>
+<head>
+<title>XBMC Mobile site</title>
+<link rel="stylesheet" href="style.css"> 
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<!-- Libs jquery-->
+	<script
+		src="https://code.jquery.com/jquery-3.2.1.min.js"
+		integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+		crossorigin="anonymous"></script>
+	<script src="jquery.i18n/libs/CLDRPluralRuleParser/src/CLDRPluralRuleParser.js"></script>
+	<!-- Source i18s-->
+	<script src="jquery.i18n/src/jquery.i18n.js"></script>
+	<script src="jquery.i18n/src/jquery.i18n.messagestore.js"></script>
+	<script src="jquery.i18n/src/jquery.i18n.fallbacks.js"></script>
+	<script src="jquery.i18n/src/jquery.i18n.parser.js"></script>
+	<script src="jquery.i18n/src/jquery.i18n.emitter.js"></script>
+	<script src="jquery.i18n/src/jquery.i18n.language.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
+		integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" 
+		crossorigin="anonymous"></script>
+	<script src="js/i18n.js"></script>
+	<script src="js/cookies.js"></script>
+	<script src="js/manage_settings_cookies.js"></script>
+	<script src="js/playlist.js"></script>
+</head>
+<body >
+
+<!-- Layout adapted from https://www.youtube.com/watch?v=92yD3nOV1pk-->
+<div id="music-container" class="music-container">
+	<div id="music-header" class="music-header">
+		<a href="./settings.html" class="fa fa-cog"></a>
+		<i class="fa fa-search"></i>
+	</div>
+	<div id="music-playlist" class="music-playlist">		
+		<div  class="music-menu text-center">
+			<div class="menu">
+				<ul>
+					<li><a href="#" data-i18n="playlist">Playlist</a></li>
+					<li><a href="#" data-i18n="songs">Songs</a></li>
+					<li><a href="#" data-i18n="artists">Artists</a></li>
+					<li><a href="#" data-i18n="albums">Albums</a></li>
+					<li><a href="#" data-i18n="genres">Genres</a></li>
+				</ul>			
+			</div>
+		</div>
+		<div id="music-box" class="music-box">
+			<div class="music-info">
+				<div class="music-img">
+					<img src="images/PortugalVansLogo.png" alt="Logo" />				
+				</div>	
+				<div class="music-name"><h6>Song title</h6><p>Single name & Music director</p></div>
+				<i class="fa fa-ellipsis-v"></i>		
+			</div><hr>		
+	</div>
+</div>
+<div class="music-play">
+	  	<div class="play-image">
+	   	 <img id="img-playing-song" src="images/PortugalVansLogo.png" />
+	  	</div>
+	  	<div class="play-controls">
+	   	  <div class="controls">
+	      	 <div class="music-name">
+		  			<h5 id="text-song-name" data-i18n="nothing-playing">Nothing playing...</h5>
+		  			<p id="text-song-performer"></p>
+		  			<p id="text-song-album"></p>	  
+	       	 </div>
+	     	  </div>
+	  </div>
+</div>
+ <div class="music-progress">
+	    <div class="progress">
+	      <div id="progress-bar" class="progress-bar">
+		
+	      </div>
+	    </div>
+	  </div>
+</body>
+</html>
