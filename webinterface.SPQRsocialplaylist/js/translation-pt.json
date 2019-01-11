@@ -1,0 +1,27 @@
+{
+	"@metadata": {
+		"authors": [
+			"Luís Mota"
+		],
+		"last-updated": "2019-01-09",
+		"locale": "pt",
+		"message-documentation": "qqq"
+	},
+	"track": "faixa",
+	"album": "album",
+	"artist":"artista",
+	"label":"faixa",
+	"Upvote!":"Quero!",
+	"Downvote!":"Não quero!",
+	"kodi-address":"Endereço Kodi:",
+	"kodi-port": "Porto Kodi:",
+	"language": "Língua",
+	"save-button": "Guardar",
+	"nothing-playing":"Nada a tocar...",
+	"playlist":"Playlist",
+	"songs":"Músicas",
+	"artists":"Artistas",
+	"albums":"Álbums",
+	"genres":"Géneros",
+	"user-alias-prompt":"Como pretende ser identificado (nome ou alcunha)?"
+}

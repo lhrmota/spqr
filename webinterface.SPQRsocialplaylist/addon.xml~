@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon
+  id="webinterface.socialplaylist"
+  version="0.1"
+  name="Social Playlist Queue Remote"
+  provider-name="lumo">
+  <requires>
+    <import addon="xbmc.json" version="6.0.0" />
+  </requires>
+  <extension point="xbmc.webinterface"/>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">Web interface for social, distributed playlist management</summary>
+    <description lang="en">TBD</description>
+    <platform>all</platform>
+    <language>en</language>
+    <source>TBD</source>
+    <forum>TBD</forum>
+    <assets>
+      <icon>icon.png</icon>
+      <fanart>images/icon.png</fanart>
+    </assets>
+  </extension>
+</addon>

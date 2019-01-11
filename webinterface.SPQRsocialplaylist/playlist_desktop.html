@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- adapted from https://forum.kodi.tv/showthread.php?tid=165814 -->
+<html>
+<head>
+<title>XBMC Desktop site</title> 
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<!-- Libs jquery-->
+	<script
+		src="https://code.jquery.com/jquery-3.2.1.min.js"
+		integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+		crossorigin="anonymous"></script>
+	<script src="../jquery.i18n/libs/CLDRPluralRuleParser/src/CLDRPluralRuleParser.js"></script>
+	<!-- Source i18s-->
+	<script src="../jquery.i18n/src/jquery.i18n.js"></script>
+	<script src="../jquery.i18n/src/jquery.i18n.messagestore.js"></script>
+	<script src="../jquery.i18n/src/jquery.i18n.fallbacks.js"></script>
+	<script src="../jquery.i18n/src/jquery.i18n.parser.js"></script>
+	<script src="../jquery.i18n/src/jquery.i18n.emitter.js"></script>
+	<script src="../jquery.i18n/src/jquery.i18n.language.js"></script>
+	<script src="js/i18n.js"></script>
+</head>
+<body>
+<script src="js/playlist.js">
+   
+</script>
+
+<div id="name">Desktop site Received data</div>
+<div id="responses">
+</div>
+<div id="notifications"></div>
+<div id="commands">
+<button type="button" onclick="sendNotify()">Send notification</button>
+<select id="language" class="language span3">
+				<option value="en">English</option>
+				<option value="pt">Portuguese</option>
+				<option value="fr">French</option>
+			</select>
+</div>
+
+</body>
+</html>
