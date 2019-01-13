@@ -8,13 +8,16 @@ window.onload= function () {
     ws = new WebSocket('ws://'+kodiAddress+':'+kodiPort+'/jsonrpc');
     // Upon start
     ws.onopen = function(event) {
- 	send_message(ws,"Playlist.GetItems", {"playlistid": 0	, "properties": ["album", "albumartist"]});// Get current playlist
+	// Get current playlist
+ 	send_message(ws,"Playlist.GetItems", {"playlistid": 0,
+					      "properties": ["album", "albumartist"]});
  	send_message(ws,"Player.GetItem",{"playerid": 0	});// Get song currently playing
  	
  	// If undefined, ask for alias... Maybe suggest a generated id?
  	console.log("userAlias"+userAlias);
  	if(typeof userAlias == "undefined"){	
-	    userAlias=window.prompt($.i18n("user-alias-prompt"),"user"+Math.floor((Math.random() * 10007)));
+	    userAlias=window.prompt($.i18n("user-alias-prompt"),
+				    "user"+Math.floor((Math.random() * 10007)));
 	    saveUserAlias()
 	    ;	 }
     }
@@ -100,9 +103,11 @@ function updateCurrentSong(item) {
     for(var i=0; playlistItems && i<playlistItems.length;i++)
 	if (playlistItems[i].id==item.id) {
 	    document.getElementById("text-song-name").innerHTML=playlistItems[i].label;
-	    if(playlistItems[i].albumartist)document.getElementById("text-song-performer").innerHTML=playlistItems[i].albumartist[0];
+	    if(playlistItems[i].albumartist)
+		document.getElementById("text-song-performer").innerHTML=playlistItems[i].albumartist[0];
 	    // TODO add other artists
-	    if(playlistItems[i].album) document.getElementById("text-song-album").innerHTML=playlistItems[i].album;
+	    if(playlistItems[i].album)
+		document.getElementById("text-song-album").innerHTML=playlistItems[i].album;
 	    
 	}
 }
@@ -111,7 +116,8 @@ function addPlaylistData(jsonData) {
     //reset playlist
     playlistItems=[];  	
     
-    // function adapted from https://www.encodedna.com/javascript/populate-json-data-to-html-table-using-javascript.htm 
+    // function adapted from
+    // https://www.encodedna.com/javascript/populate-json-data-to-html-table-using-javascript.htm 
     // EXTRACT VALUE FOR HTML HEADER.     
     var col = [];
     for (var i = 0; i < jsonData.length; i++) {
@@ -176,11 +182,13 @@ function createPlaylistEntry(item) {
     
     // Votes...
     var thumbsUpDiv=document.createElement("div");
+    var thumbsUpAnchor=document.createElement("a");
     var thumbsUpSpan=document.createElement("span");
     thumbsUpSpan.className="glyphicon glyphicon-thumbs-up";
     thumbsUpSpan.setAttribute("aria-hidden",true);
-    thumbsUpSpan.onclick="upvote("+item.id+");"
-    thumbsUpDiv.appendChild(thumbsUpSpan);
+    thumbsUpAnchor.appendChild(thumbsUpSpan);
+    thumbsUpAnchor.href="javascript:upvote("+item.id+");"
+    thumbsUpDiv.appendChild(thumbsUpAnchor);
     var thumbsUpCountSpan=document.createElement("span");
     thumbsUpCountSpan.className="badge";
     thumbsUpCountSpan.id="upCount"+item.id;
@@ -207,6 +215,8 @@ function createPlaylistEntry(item) {
     */
     // push to global playlist	
     playlistItems.push(newPlaylistItem);
+
+    requestVotesUpdate();
     
     return musicInfoDiv;
 }
@@ -248,17 +258,28 @@ function createMenuForSong(songid) {
     return menu;
 }
 */
+function requestVotesUpdate(){
+     send_message(ws, "Addons.ExecuteAddon", 
+		 {"addonid":"script.SPQR.receiveStatementsFromUser",
+		  "params":{"directive":"refreshVotes",
+			    "arg1":"",
+			    "arg2":""}});
+}
 function upvote(songId) {
     //	console.log("Upvoting:"+songId);
     send_message(ws, "Addons.ExecuteAddon", 
 		 {"addonid":"script.SPQR.receiveStatementsFromUser",
-		  "params":{"directive":"upvote","arg1":songId.toString(),"arg2":userAlias}});
+		  "params":{"directive":"upvote",
+			    "arg1":songId.toString(),
+			    "arg2":userAlias}});
 }
 function downvote(songId) {
     //	console.log("Downvoting:"+songId);
     send_message(ws, "Addons.ExecuteAddon", 
 		 {"addonid":"script.SPQR.receiveStatementsFromUser",		
-		  "params":{"directive":"downvote","arg1":songId.toString(),"arg2":userAlias}});
+		  "params":{"directive":"downvote",
+			    "arg1":songId.toString(),
+			    "arg2":userAlias}});
 }
 
 function send_message(webSocket,method, params, id) {
