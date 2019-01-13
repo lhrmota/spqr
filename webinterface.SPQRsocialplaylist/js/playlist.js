@@ -8,79 +8,86 @@ window.onload= function () {
     ws = new WebSocket('ws://'+kodiAddress+':'+kodiPort+'/jsonrpc');
     // Upon start
     ws.onopen = function(event) {
- 	send_message(ws,"Playlist.GetItems", {"playlistid": 0	, "properties": ["album", "albumartist"]});// Get current playlist
- 	send_message(ws,"Player.GetItem",{"playerid": 0	});// Get song currently playing
+ 	    
+ 	    sendPlaylistUpdateRequest();
  	
- 	// If undefined, ask for alias... Maybe suggest a generated id?
- 	console.log("userAlias"+userAlias);
- 	if(typeof userAlias == "undefined"){	
-	    userAlias=window.prompt($.i18n("user-alias-prompt"),"user"+Math.floor((Math.random() * 10007)));
-	    saveUserAlias()
-	    ;	 }
-    }
+    	// If undefined, ask for alias... Maybe suggest a generated id?
+    	console.log("userAlias"+userAlias);
+    	if(typeof userAlias == "undefined"){	
+   	    userAlias=window.prompt($.i18n("user-alias-prompt"),"user"+Math.floor((Math.random() * 10007)));
+   	    saveUserAlias();	 }
+      }
     
-    ws.onmessage = function(event) {
- 	var j = JSON.parse(event.data);
- 	//alert(JSON.stringify(event.data));
- 	if (j.id) { // response  
- 	    //console.log("got response:"+JSON.stringify(j));
-	    switch (j.id) {
-	    case "Playlist.GetItems":
- 		//	update playlist
- 		if(j.result.items){
- 		    //console.log("got playlist:"+JSON.stringify(j));
-	 	    addPlaylistData(j.result.items);
-	 	}
- 		break;
- 	    case "Player.GetItem":
- 		// update current song
- 		updateCurrentSong(j.result.item);
- 		break;
- 	    case "Addons.ExecuteAddon":
- 		break;
- 	    default:
- 		alert("Unexpected response:" + alert(JSON.stringify(j)));
- 	    }
- 	} else // notification
- 	{
- 	    //alert("Notification:" + JSON.stringify(j));
- 	    switch (j.method) {
- 	    case "Player.OnPlay":
- 		updateCurrentSong(j.params.data.item);
- 		break;
- 	    case "Playlist.OnClear":
- 		addPlaylistData([]);
- 		break;
- 	    case "Player.OnStop":
- 		//alert("PLAYER STOPPED");
- 		break;
- 	    case "Playlist.OnAdd":
- 		// TODO this event is launched when a new song is added... must update display
-		break;
-	    case "AudioLibrary.OnUpdate":
-		//TODO this is launched when playlist progresses to a new song
-	    case "Application.OnVolumeChanged":
-	    case "GUI.OnScreensaverDeactivated":
-	    case "GUI.OnScreensaverActivated":
-		// ignore
-		break;
-	    case "System.OnSleep":
-		// TODO show message? fade out contents?
-		break;	
-	    case "System.OnWake":
-		// TODO reshow contents?
-		break;
-	    case "System.OnQuit":
-		// TODO deactivate page...
-		break;
-	    case "Other.VoteUpdate":
-		updateVotes(j.params.data)
-		break;
- 	    default:
- 		alert("Other method:" + JSON.stringify(event.data));
- 	    }
+      ws.onmessage = function(event) {
+ 	    var j = JSON.parse(event.data);
+ 	    //alert(JSON.stringify(event.data));
+ 	    if (j.id) { // response  
+ 	       //console.log("got response:"+JSON.stringify(j));
+   	    switch (j.id) {
+	           case "Playlist.GetItems":
+ 	    	        //	update playlist
+ 	    	       if(j.result.items){
+ 	    	           //console.log("got playlist:"+JSON.stringify(j));
+	   	          addPlaylistData(j.result.items);
+	   	       }
+ 		          break;
+ 	           case "Player.GetItem":
+ 		            // update current song
+ 		            updateCurrentSong(j.result.item);
+ 		            break;
+ 	          case "Addons.ExecuteAddon":
+ 		            break;
+ 	          default:
+ 		            alert("Unexpected response:" + alert(JSON.stringify(j)));
+ 	        }
+ 	    } else{ // notification
+    	    //alert("Notification:" + JSON.stringify(j));
+ 	        switch (j.method) {
+ 	          case "Player.OnPlay":
+ 		         updateCurrentSong(j.params.data.item);
+ 		         break;
+ 	          case "Playlist.OnClear":
+ 		         addPlaylistData([]);
+ 		         break;
+ 	          case "Player.OnStop":
+ 		         //alert("PLAYER STOPPED");
+ 		         break;
+ 	          case "Playlist.OnAdd":
+ 		         // TODO this event is launched when a new song is added... must update display
+ 		         sendPlaylistUpdateRequest();
+		         break;
+	          case "AudioLibrary.OnUpdate":
+		          //TODO this is launched when playlist progresses to a new song
+	          case "Application.OnVolumeChanged":
+	          case "GUI.OnScreensaverDeactivated":
+	          case "GUI.OnScreensaverActivated":
+		          // ignore
+		          break;
+	          case "System.OnSleep":
+		          // TODO show message? fade out contents?
+		          break;	
+	          case "System.OnWake":
+		          // TODO reshow contents?
+		          break;
+	          case "System.OnQuit":
+		          // TODO deactivate page...
+		          break;
+	          case "Other.VoteUpdate":
+		          updateVotes(j.params.data)
+		          break;
+ 	          default:
+ 		          alert("Other method:" + JSON.stringify(event.data));
+ 	       }
  	}
-    }
+ }
+}
+
+function sendPlaylistUpdateRequest() {
+   send_message(ws,"Playlist.GetItems", {"playlistid": 0	, "properties": ["album", "albumartist"]});// Get current playlist
+}
+
+function sendCurrentSongUpdateRequest() {
+   send_message(ws,"Player.GetItem",{"playerid": 0	});// Get song currently playing
 }
 
 function updateVotes(data) {
@@ -131,7 +138,10 @@ function addPlaylistData(jsonData) {
 	var newRow=createPlaylistEntry(jsonData[i]);
 	table.appendChild(newRow);
     }
-
+   
+   
+   // Refresh current song--- Can only be done after receiving the playlist
+   sendCurrentSongUpdateRequest();
 }
 
 function createPlaylistEntry(item) {

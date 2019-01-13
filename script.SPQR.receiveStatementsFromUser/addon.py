@@ -21,7 +21,7 @@ class EventMonitor(xbmc.Player):
     
     def onPlayBackStarted(self):
         xbmc.log("Spoted onPlayBackStarted")
-        reoederPlayList()
+        reorderPlayList()
     
     def onQueueNextItem(self):
         xbmc.log("Spoted onQueueNextItem")
@@ -184,7 +184,7 @@ if __name__ == '__main__':
        xbmcvfs.mkdir(profile_dir)
        xbmc.log("Created profile dir:"+profile_dir)
   
-   EventMonitor() # launching event monitor
+   
 
    if "directive" in params:
        conn=setupDB()
@@ -198,4 +198,6 @@ if __name__ == '__main__':
                  notifyVotes(conn)
              else:
                  xbmc.log("Unexpected directive:"+params["directive"][0])
+    
+   EventMonitor() # launching event monitor 
    	
