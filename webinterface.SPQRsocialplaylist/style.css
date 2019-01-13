@@ -192,4 +192,6 @@ hr{
 @keyframes width{
     100%{width:100%;}
 }
-    
+.glyphicon{
+    color:#ffffff
+}
