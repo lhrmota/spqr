@@ -1,4 +1,4 @@
-var ws, playlistItems;
+var ws, playlistItems, myUpVotes, myDownVotes;
 
 window.onload = function() {
 	loadSettingsCookies();
@@ -17,6 +17,9 @@ window.onload = function() {
 			userAlias = window.prompt($.i18n("user-alias-prompt"), "user" + Math.floor((Math.random() * 10007)));
 			saveUserAlias();
 		}
+
+		// refresh myVotes with data from the DB
+		requestMyVotes();
 	}
 
 	ws.onmessage = function(event) {
@@ -42,7 +45,7 @@ window.onload = function() {
 					alert("Unexpected response:" + alert(JSON.stringify(j)));
 			}
 		} else { // notification
-			//alert("Notification:" + JSON.stringify(j));
+			console.log("Notification:" + JSON.stringify(j));
 			switch (j.method) {
 				case "Player.OnPlay":
 					updateCurrentSong(j.params.data.item);
@@ -76,11 +79,32 @@ window.onload = function() {
 				case "Other.VoteUpdate":
 					updateVotes(j.params.data)
 					break;
+				case "Other.MyVotesUpdate":
+					setMyVotes(j.params.data)
+					break;
+					
 				default:
 					alert("Other method:" + JSON.stringify(event.data));
 			}
 		}
 	}
+}
+
+function requestMyVotes() {
+	send_message(ws, "Addons.ExecuteAddon", {
+		"addonid": "script.SPQR.receiveStatementsFromUser",
+		"params": {
+			"directive": "getMyVotes",
+			"arg1": userAlias,
+			"arg2": ""
+		}
+	});
+}
+
+function setMyVotes(data) {
+   console.log("Got my votes:"+JSON.stringify(data));
+   myUpVotes=data.up;
+   myDownVotes=data.down;   
 }
 
 function sendPlaylistUpdateRequest() {
@@ -103,9 +127,19 @@ function updateVotes(data) {
 
 	for (var key in upVotes) {
 		var upVoteSpan = document.getElementById("upCount" + key);
-		console.log("Updating votes:upCount" + key)
-		upVoteSpan.innerHTML = upVotes[key];
+		//console.log("Updating votes:upCount" + key)
+		if(upVoteSpan) upVoteSpan.innerHTML = upVotes[key];
 	}
+
+	var downVotes = data.down;
+
+	for (var key in downVotes) {
+		var downVoteSpan = document.getElementById("downCount" + key);
+		//console.log("Updating votes:downCount" + key)
+		if(downVoteSpan) downVoteSpan.innerHTML = downVotes[key];
+	}
+
+	refreshMyVotes();
 
 }
 
@@ -200,6 +234,7 @@ function createPlaylistEntry(item) {
 	var thumbsUpSpan = document.createElement("span");
 	thumbsUpSpan.className = "glyphicon glyphicon-thumbs-up";
 	thumbsUpSpan.setAttribute("aria-hidden", true);
+	thumbsUpSpan.id = "thumbsup" + item.id;
 	thumbsUpAnchor.appendChild(thumbsUpSpan);
 	thumbsUpAnchor.href = "javascript:upvote(" + item.id + ");"
 	thumbsUpDiv.appendChild(thumbsUpAnchor);
@@ -210,14 +245,17 @@ function createPlaylistEntry(item) {
 	thumbsUpDiv.appendChild(thumbsUpCountSpan);
 	musicInfoDiv.appendChild(thumbsUpDiv);
 	var thumbsDownDiv = document.createElement("div");
+	var thumbsDownAnchor = document.createElement("a");
 	var thumbsDownSpan = document.createElement("span");
 	thumbsDownSpan.className = "glyphicon glyphicon-thumbs-down";
 	thumbsDownSpan.setAttribute("aria-hidden", true);
-	thumbsDownSpan.onclick = "downvote(" + item.id + ");"
-	thumbsDownDiv.appendChild(thumbsDownSpan);
+	thumbsDownSpan.id = "thumbsdown" + item.id;
+	thumbsDownAnchor.appendChild(thumbsDownSpan);
+	thumbsDownAnchor.href = "javascript:downvote(" + item.id + ");"
+	thumbsDownDiv.appendChild(thumbsDownAnchor);
 	var thumbsDownCountSpan = document.createElement("span");
 	thumbsDownCountSpan.className = "badge";
-	thumbsDownCountSpan.id = "upCount" + item.id;
+	thumbsDownCountSpan.id = "downCount" + item.id;
 	thumbsDownCountSpan.innerHTML = "0";
 	thumbsDownDiv.appendChild(thumbsDownCountSpan);
 	musicInfoDiv.appendChild(thumbsDownDiv);
@@ -235,6 +273,17 @@ function createPlaylistEntry(item) {
 	return musicInfoDiv;
 }
 
+// After updating the playlist, refresh display of own votes.
+function refreshMyVotes() {
+	console.log("Refreshing my votes:" + myUpVotes + ";" + myDownVotes);
+	for (var songid in myUpVotes) {
+		console.log("Refreshing up vote:" + "thumbsup" + myUpVotes[songid]);
+		if(document.getElementById("thumbsup" + myUpVotes[songid])) document.getElementById("thumbsup" + myUpVotes[songid]).style.color = "Lime";
+	}
+	for (var songid in myDownVotes)
+		if(document.getElementById("thumbsdown" + myDownVotes[songid])) document.getElementById("thumbsdown" + myDownVotes[songid]).style.color = "red";
+
+}
 // menu. Replaced by links on the thumbs
 /*
 function createMenuForSong(songid) {
@@ -284,6 +333,7 @@ function requestVotesUpdate() {
 }
 
 function upvote(songId) {
+	myUpVotes.push(songId);
 	//	console.log("Upvoting:"+songId);
 	send_message(ws, "Addons.ExecuteAddon", {
 		"addonid": "script.SPQR.receiveStatementsFromUser",
@@ -296,6 +346,7 @@ function upvote(songId) {
 }
 
 function downvote(songId) {
+	myDownVotes.push(songId);
 	//	console.log("Downvoting:"+songId);
 	send_message(ws, "Addons.ExecuteAddon", {
 		"addonid": "script.SPQR.receiveStatementsFromUser",

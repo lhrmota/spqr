@@ -129,7 +129,6 @@ def notifyVotes(conn):
       for row in rows:
          #xbmc.log("Row:"+' '.join(map(str,row)))
          xbmc.log("Row:"+str(row[0])+":"+str(row[1]))
-         # TODO write to json
          jsonDataUp[row[0]]=row[1]
       
       # down votes
@@ -138,8 +137,7 @@ def notifyVotes(conn):
       rows = cur.fetchall()
       for row in rows:
          #xbmc.log("Row:"+' '.join(map(str,row)))
-         xbmc.log("Row:"+str(row[0])+":"+str(row[1]))
-         # TODO write to json
+         #xbmc.log("Row:"+str(row[0])+":"+str(row[1]))
          jsonDataDown[row[0]]=row[1]
 
 
@@ -147,8 +145,30 @@ def notifyVotes(conn):
 
       xbmc.executeJSONRPC('{ "jsonrpc": "2.0", "method": "JSONRPC.NotifyAll", "id":"JSONRPC.NotifyAll","params":{"sender":"SPQR","message":"VoteUpdate","data":'+json.dumps(jsonData)+' }}')
    except Error as e:
-         xbmc.log("Error: notifyAll failed"+' '.join(e))
-	
+         xbmc.log("Error: notifyVotes failed: "+' '.join(e))
+
+def getMyVotes(conn,user):	
+   """Get all votes vy specified user
+   :param conn: DB connection
+   :param user: the user id"""
+   try:
+      xbmc.log("Getting votes for:"+user)
+      cur = conn.cursor()
+      cur.execute("""SELECT songid, value FROM unfulfilledVotes WHERE user=? """,(user,))
+         
+      jsonData={"up":[],"down":[]}
+      rows = cur.fetchall()
+      for row in rows:
+         #xbmc.log("Row:"+' '.join(map(str,row)))
+         #xbmc.log("Row:"+str(row[0])+":"+str(row[1]))
+         if row[1]==1:#upvote
+            jsonData["up"].append(row[0])
+         else:#downvote
+            jsonData["down"].append(row[0])                 
+      xbmc.executeJSONRPC('{ "jsonrpc": "2.0", "method": "JSONRPC.NotifyAll", "id":"JSONRPC.NotifyAll","params":{"sender":"SPQR","message":"MyVotesUpdate","data":'+json.dumps(jsonData)+' }}')
+   except Error as e:
+         xbmc.log("Error: getMyVotes failed: "+' '.join(e))
+   
 def select_all_votes(conn):
     """
     Query all rows in the votes table and log their value
@@ -173,8 +193,6 @@ if __name__ == '__main__':
 
    params = urlparse.parse_qs('&'.join(sys.argv[1:]))
    #xbmc.log("Keys:"+str(len(params.keys()))+":"+str(len(params)))
-   if "directive" in params:
-        xbmc.log("Directive:"+params["directive"][0])
 
    # Check for need to create profile dir
    profile_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile')).decode('utf-8')
@@ -187,6 +205,7 @@ if __name__ == '__main__':
    
 
    if "directive" in params:
+       xbmc.log("Directive:"+params["directive"][0])
        conn=setupDB()
        if params["directive"][0]=="upvote":
           insertVote(conn,params["arg1"][0],params["arg2"][0],1)
@@ -197,7 +216,13 @@ if __name__ == '__main__':
              if params["directive"][0]=="refreshVotes":
                  notifyVotes(conn)
              else:
-                 xbmc.log("Unexpected directive:"+params["directive"][0])
-    
-   EventMonitor() # launching event monitor 
+                if params["directive"][0]=="getMyVotes":
+                   getMyVotes(conn,params["arg1"][0])
+                else:
+                   xbmc.log("Unexpected directive:"+params["directive"][0])
+                   
+   monitor=None
+   xbmc.log("Will launch monitor..."+str(monitor))
+   if monitor!=None:
+      monitor=EventMonitor() # launching event monitor 
    	
