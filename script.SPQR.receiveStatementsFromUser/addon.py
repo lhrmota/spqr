@@ -9,32 +9,6 @@ import os
 import xbmcvfs
 import json
 
-class EventMonitor(xbmc.Player):
-    # from forum.kodi.tv/showthread.php?tid338471
-    def __init__ (self):
-        monitor=xbmc.Monitor()
-        xbmc.Player.__init__(self)
-        xbmc.log("EventMonitor launched")
-        #while not monitor.abortRequested():
-        #    if monitor.waitForAbort(10):
-        #        break
-    
-    def onPlayBackStarted(self):
-        xbmc.log("Spoted onPlayBackStarted")
-        reorderPlayList()
-    
-    def onQueueNextItem(self):
-        xbmc.log("Spoted onQueueNextItem")
-    
-    def onAVStarted(self):
-        xbmc.log("Spoted onAVStarted ")
-
-
-def reorderPlayList():
-    """ will reorder playlist according to present votes.
-    """
-    # move next song's votes to fulfilledVotes
-
 # code from http://www.sqlitetutorial.net/sqlite-python/create-tables/
 def setupDB():
     database = os.path.join(profile_dir,"spqr.db")
@@ -186,22 +160,18 @@ def select_all_votes(conn):
     except Error as e:
          xbmc.log("Error: cannot select votes"+' '.join(e))
 
+
+
 # Launch point
 if __name__ == '__main__':
-   # Get profile dir
-   xbmc.log("Starting addon...")
+   xbmc.log("Starting receive statements addon...")
 
+   # Get profile dir
    params = urlparse.parse_qs('&'.join(sys.argv[1:]))
    #xbmc.log("Keys:"+str(len(params.keys()))+":"+str(len(params)))
 
-   # Check for need to create profile dir
    profile_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile')).decode('utf-8')
-   if xbmcvfs.exists(profile_dir):
-       xbmc.log("Profile dir:"+profile_dir)
-   else:
-       xbmcvfs.mkdir(profile_dir)
-       xbmc.log("Created profile dir:"+profile_dir)
-  
+   
    
 
    if "directive" in params:
@@ -220,9 +190,4 @@ if __name__ == '__main__':
                    getMyVotes(conn,params["arg1"][0])
                 else:
                    xbmc.log("Unexpected directive:"+params["directive"][0])
-                   
-   monitor=None
-   xbmc.log("Will launch monitor..."+str(monitor))
-   if monitor!=None:
-      monitor=EventMonitor() # launching event monitor 
-   	
+    

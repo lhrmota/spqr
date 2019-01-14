@@ -6,11 +6,12 @@
 	<extension point="xbmc.python.script" library="addon.py">
 		<provides>executable</provides>
 	</extension>
+	<extension point="xbmc.service" library="service.py" />
 	<extension point="xbmc.addon.metadata">
 		<platform>all</platform>
 		<summary lang="en">SPQR receive user Statements</summary>
 		<description lang="en">Addon to receive votes and messages from the pages running on users' browsers</description>
-		<license>GNU General Public License, v2</license>
+		<license>GNU General Public License, v3</license>
 		<language></language>
 		<forum>TBD</forum>
 		<source>TBD</source>
