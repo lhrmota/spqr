@@ -43,32 +43,52 @@ class EventMonitor(xbmc.Player):
     def onPlayBackSeekChapter(self):
         xbmc.log("SPQR Spoted  onPlayBackSeekChapter")
 
+# Global vars
+prevousSongId=None
 
 def reorderPlayList(conn):
     """ will reorder playlist according to present votes.
     """
-    infoTag=xbmc.Player().getMusicInfoTag()
-    xbmc.log("SPQR Currently playing track #:"+str(infoTag))
+    # Below does not work in v17: getDbId was only introduced in v18
+    #infoTag=xbmc.Player().getMusicInfoTag()
+#    xbmc.log("SPQR Currently playing track:"+infoTag.getURL()+
+#       "*"+infoTag.getAlbumArtist()+"-"+infoTag.getTitle()+"$"+str(infoTag.getTrack()))
+#    xbmc.log("SPQR Currently playing track:"+' '.join(dir(infoTag)))
     
-    #moveCurrentSongsVotesToFulfilledVotes(conn,infoTag)
-    #removeCurrentSonfFromPlaylist(infoTag)
-      
+    jsonGetItemRequest=xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.GetItem","id":"Player.GetItem","params":{"playerid":0}}')    
+    try:
+#        xbmc.log("SPQR Request:"+jsonGetItemRequest)
+        response = json.loads(jsonGetItemRequest)
+    except UnicodeDecodeError:
+        response = json.loads(jsonGetItemRequest.decode('utf-8', 'ignore'))
+
+    #xbmc.log("SPQR json getItem:"+' '.join(dir(response)))
+    xbmc.log("SPQR current song id:"+str(response.get("result").get("item").get("id")))
+    # is this really needed? Al least to avoid removing first song from playlist at the beginning...
+    previousSongId=response.get("result").get("item").get("id")
+    
+    moveCurrentSongsVotesToFulfilledVotes(conn,response.get("result").get("item").get("id"))
+    removePreviousSongFromPlaylist(infoTag)
+    # will probably need to do this through JSON RPC, has add, insert, remove and swap operations
+    #  
 
     
-def moveCurrentSongsVotesToFulfilledVotes(conn,infoTag):
+def moveCurrentSongsVotesToFulfilledVotes(conn,songid):
    try:
       cur = conn.cursor()
       cur.execute("""INSERT INTO  fulfilledVotes (user, value,songid,songorder) select user, value,"""+
-        str(infoTag.getDbId())+""" AS songid, """+
-        EventMonitor.songIndex+""" AS songorder FROM unfulfilledVotes WHERE songid=? """,(infoTag.getDbId(),))
-      cur.execute("""DELETE FROM unfulfilledVotes WHERE songid=? """,(infoTag.getDbId(),))
+        str(songid)+""" AS songid, """+
+        str(EventMonitor.songIndex)+""" AS songorder FROM unfulfilledVotes WHERE songid=? """,(songid,))
+      cur.execute("""DELETE FROM unfulfilledVotes WHERE songid=? """,(songid,))
       conn.commit()       
     
    except Error as e:
-      xbmc.log("Error: movePresentSongsVotesToFulfilledVotes failed: "+' '.join(e))
+      xbmc.log("SPQR Error: movePresentSongsVotesToFulfilledVotes failed: "+' '.join(e))
       
-def removeCurrentSonfFromPlaylist(infoTag):
-   xbmc.Playlist().remove(infoTag.getURL())
+def removePreviousSongFromPlaylist(infoTag):
+  #will simply remove the first song... Which will be the one last played...
+  if prevousSongId!=None: # Will be None at the beginning...
+      jsonGetItemRequest=xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.GetItem","id":"Player.GetItem","params":{"playerid":0}}')
          
 # code from http://www.sqlitetutorial.net/sqlite-python/create-tables/
 def setupDB():
