@@ -65,6 +65,7 @@ window.onload = function() {
 				case "Application.OnVolumeChanged":
 				case "GUI.OnScreensaverDeactivated":
 				case "GUI.OnScreensaverActivated":
+				case "Player.OnSpeedChanged":
 					// ignore
 					break;
 				case "System.OnSleep":

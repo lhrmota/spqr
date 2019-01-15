@@ -13,7 +13,7 @@ import json
 def setupDB():
     database = os.path.join(profile_dir,"spqr.db")
     	
-    xbmc.log("DB file:"+database)
+    xbmc.log("SPQR DB file:"+database)
     
     # value should be 1 or -1, depending on being up or downvote. No booleans in SQLite! 
     sql_create_unfulfilledvotes_table = """ CREATE TABLE IF NOT EXISTS unfulfilledVotes (
@@ -33,7 +33,7 @@ def setupDB():
         create_table(conn, sql_create_unfulfilledvotes_table)
         create_table(conn, sql_create_fulfilledvotes_table)
     else:
-        xbmc.log("Error: cannot create the database connection.")
+        xbmc.log("SPQR Error: cannot create the database connection.")
         
     # to be used outside this function
     return conn
@@ -49,8 +49,7 @@ def create_connection(db_file):
      conn = sqlite3.connect(db_file)
      return conn
     except Error as e:
-      xbmc.log("Error: cannot create connection"+' '.join(e))
-      print(e)
+      xbmc.log("SPQR Error: cannot create connection"+' '.join(e))
     return None
 
 def create_table(conn, create_table_sql):
@@ -64,8 +63,7 @@ def create_table(conn, create_table_sql):
         c.execute(create_table_sql)
         conn.commit()
     except Error as e:
-      xbmc.log("Error: cannot create table:"+' '.join(e))
-      print(e)
+      xbmc.log("SPQR Error: cannot create table:"+' '.join(e))
 
 def insertVote(conn,songid,user,value):
    """ insert new vote on the corresponding table
@@ -85,10 +83,9 @@ def insertVote(conn,songid,user,value):
          notifyVotes(conn)
          # immediately deorder playlist? Maybe not, could cause instability with many users...
       except Error as e:
-         xbmc.log("Error: cannot insert into votes"+' '.join(e))
-         print(e)
+         xbmc.log("SPQR Error: cannot insert into votes"+' '.join(e))
    else:
-      xbmc.log("Error: cannot insert into votes: no connection available")
+      xbmc.log("SPQR Error: cannot insert into votes: no connection available")
 
 def notifyVotes(conn):
    """Notify all subscribed connections that votes were altered"""
@@ -114,12 +111,11 @@ def notifyVotes(conn):
          #xbmc.log("Row:"+str(row[0])+":"+str(row[1]))
          jsonDataDown[row[0]]=row[1]
 
-
       jsonData={"up":jsonDataUp,"down":jsonDataDown}
 
       xbmc.executeJSONRPC('{ "jsonrpc": "2.0", "method": "JSONRPC.NotifyAll", "id":"JSONRPC.NotifyAll","params":{"sender":"SPQR","message":"VoteUpdate","data":'+json.dumps(jsonData)+' }}')
    except Error as e:
-         xbmc.log("Error: notifyVotes failed: "+' '.join(e))
+         xbmc.log("SPQR Error: notifyVotes failed: "+' '.join(e))
 
 def getMyVotes(conn,user):	
    """Get all votes vy specified user
@@ -141,30 +137,11 @@ def getMyVotes(conn,user):
             jsonData["down"].append(row[0])                 
       xbmc.executeJSONRPC('{ "jsonrpc": "2.0", "method": "JSONRPC.NotifyAll", "id":"JSONRPC.NotifyAll","params":{"sender":"SPQR","message":"MyVotesUpdate","data":'+json.dumps(jsonData)+' }}')
    except Error as e:
-         xbmc.log("Error: getMyVotes failed: "+' '.join(e))
+         xbmc.log("SPQR Error: getMyVotes failed: "+' '.join(e))
    
-def select_all_votes(conn):
-    """
-    Query all rows in the votes table and log their value
-    :param conn: the Connection object
-    :return:
-    """
-    try:
-      cur = conn.cursor()
-      cur.execute("""SELECT count(*) FROM params["directive"][0]""")
-    	
-      rows = cur.fetchall()
-    	
-      for row in rows:
-         xbmc.log(row)
-    except Error as e:
-         xbmc.log("Error: cannot select votes"+' '.join(e))
-
-
-
 # Launch point
 if __name__ == '__main__':
-   xbmc.log("Starting receive statements addon...")
+   xbmc.log("SPQR Starting receive statements addon...")
 
    # Get profile dir
    params = urlparse.parse_qs('&'.join(sys.argv[1:]))

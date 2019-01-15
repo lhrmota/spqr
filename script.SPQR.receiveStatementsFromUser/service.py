@@ -18,39 +18,39 @@ class EventMonitor(xbmc.Player):
         self.conn=setupDB()
         monitor=xbmc.Monitor()
         xbmc.Player.__init__(self)
-        xbmc.log("EventMonitor launched")
+        xbmc.log("SPQR EventMonitor launched")
         while not monitor.abortRequested():
            # Sleep/wait for abort for 10 seconds
            if monitor.waitForAbort(10):
               # Abort was requested while waiting. We should exit
               break
-        xbmc.log("leaving monitor addon! %s" % time.time(), level=xbmc.LOGNOTICE)
+        xbmc.log("SPQR leaving monitor addon! %s" % time.time(), level=xbmc.LOGNOTICE)
     
     def onPlayBackStarted(self):
-        xbmc.log("Spoted onPlayBackStarted")
+        xbmc.log("SPQR Spoted onPlayBackStarted")
         EventMonitor.songIndex+=1
         reorderPlayList(self.conn)
     
     def onQueueNextItem(self):
-        xbmc.log("Spoted onQueueNextItem")
+        xbmc.log("SPQR Spoted onQueueNextItem")
     
     def onAVStarted(self):
-        xbmc.log("Spoted onAVStarted ")
+        xbmc.log("SPQR Spoted onAVStarted ")
         
     def onPlayBackStopped(self):
-        xbmc.log("Spoted onPlayBackStopped ")
+        xbmc.log("SPQR Spoted onPlayBackStopped ")
         
     def onPlayBackSeekChapter(self):
-        xbmc.log("Spoted  onPlayBackSeekChapter")
+        xbmc.log("SPQR Spoted  onPlayBackSeekChapter")
 
 
 def reorderPlayList(conn):
     """ will reorder playlist according to present votes.
     """
     infoTag=xbmc.Player().getMusicInfoTag()
-    xbmc.log("Currently playing track #:"+str(infoTag.getDbId()))
+    xbmc.log("SPQR Currently playing track #:"+str(infoTag))
     
-    moveCurrentSongsVotesToFulfilledVotes(conn,infoTag)
+    #moveCurrentSongsVotesToFulfilledVotes(conn,infoTag)
     #removeCurrentSonfFromPlaylist(infoTag)
       
 
@@ -58,7 +58,8 @@ def reorderPlayList(conn):
 def moveCurrentSongsVotesToFulfilledVotes(conn,infoTag):
    try:
       cur = conn.cursor()
-      cur.execute("""INSERT INTO  fulfilledVotes (user, value,songid,songorder) select user, value,"""+str(infoTag.getDbId())+""" AS songid, """+
+      cur.execute("""INSERT INTO  fulfilledVotes (user, value,songid,songorder) select user, value,"""+
+        str(infoTag.getDbId())+""" AS songid, """+
         EventMonitor.songIndex+""" AS songorder FROM unfulfilledVotes WHERE songid=? """,(infoTag.getDbId(),))
       cur.execute("""DELETE FROM unfulfilledVotes WHERE songid=? """,(infoTag.getDbId(),))
       conn.commit()       
@@ -76,29 +77,29 @@ def setupDB():
        profile_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile')).decode('utf-8')
       
        if xbmcvfs.exists(profile_dir):
-          xbmc.log("Profile dir:"+profile_dir)
+          xbmc.log("SPQR Profile dir:"+profile_dir)
        else:
           xbmcvfs.mkdir(profile_dir)
-          xbmc.log("Created profile dir:"+profile_dir)
+          xbmc.log("SPQR Created profile dir:"+profile_dir)
      
        database = os.path.join(profile_dir,"spqr.db")
        	
-       xbmc.log("DB file:"+database)
+       xbmc.log("SPQR DB file:"+database)
        
        # create a database connection
        conn = sqlite3.connect(database)
        if conn is None:
-           xbmc.log("Error: cannot create the database connection.")
+           xbmc.log("SPQR Error: cannot create the database connection.")
            
        # to be used outside this function
        return conn
    except Error as e:
-       xbmc.log("Error: setupDB failed: "+' '.join(e))
+       xbmc.log("SPQR Error: setupDB failed: "+' '.join(e))
        
 # Launch point
 if __name__ == '__main__':
    # Get profile dir
-   xbmc.log("Starting monitor service...Python API:"+xbmc.python)
+   xbmc.log("SPQR Starting monitor service...")
 
    EventMonitor()
    
