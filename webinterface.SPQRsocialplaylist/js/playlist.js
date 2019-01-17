@@ -57,7 +57,8 @@ window.onload = function() {
 					//alert("PLAYER STOPPED");
 					break;
 				case "Playlist.OnAdd":
-					// TODO this event is launched when a new song is added... must update display
+				case "Playlist.OnRemove":
+					// this event is launched when a new song is added/removed... must update display
 					sendPlaylistUpdateRequest();
 					break;
 				case "AudioLibrary.OnUpdate":
@@ -66,6 +67,7 @@ window.onload = function() {
 				case "GUI.OnScreensaverDeactivated":
 				case "GUI.OnScreensaverActivated":
 				case "Player.OnSpeedChanged":
+				case "Player.OnSeek":
 					// ignore
 					break;
 				case "System.OnSleep":

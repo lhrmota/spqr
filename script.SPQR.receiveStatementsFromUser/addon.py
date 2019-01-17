@@ -74,11 +74,10 @@ def insertVote(conn,songid,user,value):
    if conn is not None:
       try:	
          sqlText="""INSERT INTO unfulfilledVotes (user,songid,value) VALUES (?,?,?)"""
-         xbmc.log("Trying to insert:"+sqlText)
+#         xbmc.log("SPQR Trying to insert:"+sqlText)
          c = conn.cursor()
          c.execute(sqlText,(user,songid,value))
          conn.commit()
-         xbmc.log("Insertion finished")
          # launch notification to update clients
          notifyVotes(conn)
          # immediately deorder playlist? Maybe not, could cause instability with many users...
@@ -99,7 +98,7 @@ def notifyVotes(conn):
       rows = cur.fetchall()
       for row in rows:
          #xbmc.log("Row:"+' '.join(map(str,row)))
-         xbmc.log("Row:"+str(row[0])+":"+str(row[1]))
+         #xbmc.log("Row:"+str(row[0])+":"+str(row[1]))
          jsonDataUp[row[0]]=row[1]
       
       # down votes
@@ -107,8 +106,7 @@ def notifyVotes(conn):
       jsonDataDown={}
       rows = cur.fetchall()
       for row in rows:
-         #xbmc.log("Row:"+' '.join(map(str,row)))
-         #xbmc.log("Row:"+str(row[0])+":"+str(row[1]))
+         #xbmc.log("SPQR Row:"+str(row[0])+":"+str(row[1]))
          jsonDataDown[row[0]]=row[1]
 
       jsonData={"up":jsonDataUp,"down":jsonDataDown}
@@ -122,15 +120,14 @@ def getMyVotes(conn,user):
    :param conn: DB connection
    :param user: the user id"""
    try:
-      xbmc.log("Getting votes for:"+user)
+      #xbmc.log("SPQR Getting votes for:"+user)
       cur = conn.cursor()
       cur.execute("""SELECT songid, value FROM unfulfilledVotes WHERE user=? """,(user,))
          
       jsonData={"up":[],"down":[]}
       rows = cur.fetchall()
       for row in rows:
-         #xbmc.log("Row:"+' '.join(map(str,row)))
-         #xbmc.log("Row:"+str(row[0])+":"+str(row[1]))
+         #xbmc.log("SPQR Row:"+' '.join(map(str,row)))
          if row[1]==1:#upvote
             jsonData["up"].append(row[0])
          else:#downvote
@@ -152,7 +149,7 @@ if __name__ == '__main__':
    
 
    if "directive" in params:
-       xbmc.log("Directive:"+params["directive"][0])
+       #xbmc.log("SPQR Directive:"+params["directive"][0])
        conn=setupDB()
        if params["directive"][0]=="upvote":
           insertVote(conn,params["arg1"][0],params["arg2"][0],1)
@@ -166,5 +163,5 @@ if __name__ == '__main__':
                 if params["directive"][0]=="getMyVotes":
                    getMyVotes(conn,params["arg1"][0])
                 else:
-                   xbmc.log("Unexpected directive:"+params["directive"][0])
+                   xbmc.log("SPQR Unexpected directive:"+params["directive"][0])
     
