@@ -48,7 +48,7 @@ previousSongId=None
 
 def reorderPlayList(conn):
     """ will reorder playlist according to present votes.
-    """
+	  :param conn: DB connection    """
     # Below does not work in v17: getDbId was only introduced in v18
     #infoTag=xbmc.Player().getMusicInfoTag()
 #    xbmc.log("SPQR Currently playing track:"+infoTag.getURL()+
@@ -70,11 +70,29 @@ def reorderPlayList(conn):
     
     moveCurrentSongsVotesToFulfilledVotes(conn,response.get("result").get("item").get("id"))
     removePreviousSongFromPlaylist()
-    # will probably need to do this through JSON RPC, has add, insert, remove and swap operations
-    #  
+    
+    votes=orderVotes(conn)
+    
+    # will probably need to modify Playlist through JSON RPC, has add, insert, remove and swap operations    
+    
+    
     # is this really needed? Al least to avoid removing first song from playlist at the beginning...
     previousSongId=response.get("result").get("item").get("id")
     
+def orderVotes(conn):
+   """ compute new playlist according to votes on the db
+     :param conn: DB connection"""
+   # initially, to test, very simple algorithm: count votes, adding 1 for up, 0.5 for down
+   cur = conn.cursor()
+   cur.execute("""DROP TABLE IF EXISTS tempVotes""")
+   cur.execute("""CREATE TEMP TABLE tempVotes AS SELECT songid, sum(value) AS votes FROM unfulfilledVotes WHERE value=1 GROUP BY songid """)
+   cur.execute("""INSERT INTO tempVotes SELECT songid, sum(value)*.5 AS votes FROM unfulfilledVotes WHERE value=-1 GROUP BY songid """)
+   cur.execute("""SELECT songid, sum(votes) AS score FROM tempVotes GROUP BY songid ORDER BY score DESC""")   
+   rows = cur.fetchall()
+ #  for row in rows:
+#      xbmc.log("SPQR new playlist Row:"+' '.join(map(str,row)))
+	return rows
+	       
 def moveCurrentSongsVotesToFulfilledVotes(conn,songid):
    xbmc.log("SPQR moving votes song #:"+str(songid))
    try:
