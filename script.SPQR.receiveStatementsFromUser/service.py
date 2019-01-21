@@ -16,6 +16,7 @@ class EventMonitor(xbmc.Player):
     # from forum.kodi.tv/showthread.php?tid338471
     def __init__ (self):
         self.conn=setupDB()
+        moveVotesToPastVotes(self.conn)
         monitor=xbmc.Monitor()
         xbmc.Player.__init__(self)
         xbmc.log("SPQR EventMonitor launched")
@@ -46,6 +47,24 @@ class EventMonitor(xbmc.Player):
 # Global vars
 previousSongId=None
 
+def moveVotesToPastVotes(conn):
+   """ When starting a new session, move all votes, independently of having been
+       fulfilled or not, to the pastVotes table. This infor might be used to select songs
+       when no votes are present, namely on startup
+     :param conn: DB connection"""
+   try:
+      cur = conn.cursor()
+      cur.execute("""INSERT INTO pastVotes (user, value,songid,date) SELECT user, value,songid,date"""+
+         """ FROM unfulfilledVotes """)
+      cur.execute("""INSERT INTO pastVotes (user, value,songid,date) SELECT user, value,songid,date"""+
+         """ FROM fulfilledVotes """)
+      cur.execute("""DELETE FROM unfulfilledVotes """)
+      cur.execute("""DELETE FROM fulfilledVotes """)
+      conn.commit()       
+    
+   except Error as e:
+      xbmc.log("SPQR Error: moveVotesToPastVotes failed: "+' '.join(e)) 
+   
 def reorderPlayList(conn):
    """ will reorder playlist according to present votes.
     :param conn: DB connection    """
@@ -86,29 +105,42 @@ def reorderPlayList(conn):
    xbmc.log("SPQR: positiveScores:"+' '.join(map(str,positiveScores)))
    xbmc.log("SPQR: negativeScores:"+' '.join(map(str,negativeScores)))
    
-   alterPlayList(positiveScores,songsWithNoVotes,negativeScores)
+   alterPlayList(presentSong,positiveScores,songsWithNoVotes,negativeScores)
    
    # is this really needed? Al least to avoid removing first song from playlist at the beginning...
    previousSongId=response.get("result").get("item").get("id")
     
-def alterPlayList(positiveScores,songsWithNoVotes,negativeScores):
+def alterPlayList(presentSong,positiveScores,songsWithNoVotes,negativeScores):
    """ apply new Playlist order. first, songs with a positive score, second songs
     with no votes, and, last, songs with negative votes
+    :param presentSong: id of the currently playing song
     :param positiveScores: list of lists with elements id and score, the latter always positive
     :param songsWithNoVotes: list of tuples id, label, type 
     :param negativeScores:list of lists with elements id and score, the latter always negative"""
    # could modify Playlist through JSON RPC, has add, insert, remove and swap operations?
    # will first try to simply clear playlist and create a new one
    
-   # concatenate differen lists
-   scoreList=[];
-   scoreList.extend(positiveScores);
-   scoreList.extend([[song["id"],0] for song in songsWithNoVotes]);
-   scoreList.extend(negativeScores);
+   # concatenate different lists
+   idList=[presentSong];
+   idList.extend([score[0] for score in positiveScores]);
+   idList.extend([song["id"] for song in songsWithNoVotes]);
+   idList.extend([score[0] for score in negativeScores]);
    
    #debug
-   for score in scoreList:
-      xbmc.log("SPQR new song list item:"+str(score[0])+":"+str(score[1]))
+   #for id in idList:
+#      xbmc.log("SPQR new song list item:"+str(id))
+
+   xbmc.PlayList(0).clear();
+   
+   for id in idList:
+#      xbmc.log("SPQR id:"+' '.join(map(str,id)))
+      jsonRequest=xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Playlist.Add", '+
+        '"params": { "item": {"songid": '+str(id)+'}, "playlistid": 0 }, "id": 1}')    
+      try:
+#       xbmc.log("SPQR Request:"+jsonRequest)
+         response = json.loads(jsonRequest)
+      except UnicodeDecodeError:
+         response = json.loads(jsonRequest.decode('utf-8', 'ignore'))
     
 def splitScores(scores):
    """ filters the scores in the first argument, keeping positive scores. Negative scores are returned
@@ -130,7 +162,7 @@ def removeSongsWithVotes(currentSongs,scores):
    for song in currentSongs:
       if not existsSongWithId(song["id"],scores):
          result.append(song)
-         xbmc.log("SPQR adding song with no votes:"+str(song["id"])) 
+         #xbmc.log("SPQR adding song with no votes:"+str(song["id"])) 
    return result
 	
 def existsSongWithId(id,scores):
@@ -179,8 +211,8 @@ def moveCurrentSongsVotesToFulfilledVotes(conn,songid):
    xbmc.log("SPQR moving votes song #:"+str(songid))
    try:
       cur = conn.cursor()
-      cur.execute("""INSERT INTO fulfilledVotes (user, value,songid,songorder) SELECT user, value,songid,"""+
-        str(EventMonitor.songIndex)+""" AS songorder FROM unfulfilledVotes WHERE songid=? """,(songid,))
+      cur.execute("""INSERT INTO fulfilledVotes (user, value,songid,songorder,date) SELECT user, value,songid,"""+
+        str(EventMonitor.songIndex)+""" AS songorder, date FROM unfulfilledVotes WHERE songid=? """,(songid,))
       cur.execute("""DELETE FROM unfulfilledVotes WHERE songid=? """,(songid,))
       conn.commit()       
     
@@ -223,17 +255,53 @@ def setupDB():
        conn = sqlite3.connect(database)
        if conn is None:
            xbmc.log("SPQR Error: cannot create the database connection.")
-           
-       # to be used outside this function
-       return conn
+       else:
+          createDbTables(conn)
+          # to be used outside this function
+          return conn
    except Error as e:
        xbmc.log("SPQR Error: setupDB failed: "+' '.join(e))
-       
+
+
+def create_table(conn, create_table_sql):
+    """ create a table from the create_table_sql statement
+    :param conn: Connection object
+    :param create_table_sql: a CREATE TABLE statement
+    :return:
+    """
+    try:
+        c = conn.cursor()
+        c.execute(create_table_sql)
+        conn.commit()
+    except Error as e:
+      xbmc.log("SPQR Error: cannot create table:"+' '.join(e))
+ 
+def createDbTables(conn):
+    # value should be 1 or -1, depending on being up or downvote. No booleans in SQLite! 
+    sql_create_unfulfilledvotes_table = """ CREATE TABLE IF NOT EXISTS unfulfilledVotes (
+             user TEXT NOT NULL,
+             songid INTEGER NOT NULL,
+             value INTEGER NOT NULL,
+             date TEXT NOT NULL);"""
+    create_table(conn, sql_create_unfulfilledvotes_table)
+    sql_create_fulfilledvotes_table = """CREATE TABLE IF NOT EXISTS fulfilledVotes (
+             user TEXT NOT NULL,
+             songid INTEGER NOT NULL,
+             value INTEGER NOT NULL,
+             songorder INTEGER NOT NULL,
+             date TEXT NOT NULL); """
+    create_table(conn, sql_create_fulfilledvotes_table)
+    sql_create_pastvotes_table = """CREATE TABLE IF NOT EXISTS pastVotes (
+             user text NOT NULL,
+             songid integer NOT NULL,
+             value integer NOT NULL,
+             date TEXT NOT NULL); """
+    create_table(conn, sql_create_pastvotes_table)
+           
 # Launch point
 if __name__ == '__main__':
-   # Get profile dir
    xbmc.log("SPQR Starting monitor service...")
-
+   
    EventMonitor()
    
    

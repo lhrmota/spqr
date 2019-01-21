@@ -14,29 +14,14 @@ def setupDB():
     database = os.path.join(profile_dir,"spqr.db")
     	
     xbmc.log("SPQR DB file:"+database)
-    
-    # value should be 1 or -1, depending on being up or downvote. No booleans in SQLite! 
-    sql_create_unfulfilledvotes_table = """ CREATE TABLE IF NOT EXISTS unfulfilledVotes (
-             user text NOT NULL,
-             songid integer NOT NULL,
-             value integer NOT NULL);"""
-    sql_create_fulfilledvotes_table = """CREATE TABLE IF NOT EXISTS fulfilledVotes (
-             user text NOT NULL,
-             songid integer NOT NULL,
-             value integer NOT NULL,
-             songorder integer NOT NULL); """
  
     # create a database connection
     conn = create_connection(database)
-    if conn is not None:
-        # create votes tables
-        create_table(conn, sql_create_unfulfilledvotes_table)
-        create_table(conn, sql_create_fulfilledvotes_table)
-    else:
+    if conn is None:
         xbmc.log("SPQR Error: cannot create the database connection.")
-        
-    # to be used outside this function
-    return conn
+    else:
+       # to be used outside this function
+       return conn
       
 # Database code
 def create_connection(db_file):
@@ -52,19 +37,6 @@ def create_connection(db_file):
       xbmc.log("SPQR Error: cannot create connection"+' '.join(e))
     return None
 
-def create_table(conn, create_table_sql):
-    """ create a table from the create_table_sql statement
-    :param conn: Connection object
-    :param create_table_sql: a CREATE TABLE statement
-    :return:
-    """
-    try:
-        c = conn.cursor()
-        c.execute(create_table_sql)
-        conn.commit()
-    except Error as e:
-      xbmc.log("SPQR Error: cannot create table:"+' '.join(e))
-
 def insertVote(conn,songid,user,value):
    """ insert new vote on the corresponding table
    :param songid: song identifier
@@ -73,7 +45,7 @@ def insertVote(conn,songid,user,value):
    """
    if conn is not None:
       try:	
-         sqlText="""INSERT INTO unfulfilledVotes (user,songid,value) VALUES (?,?,?)"""
+         sqlText="""INSERT INTO unfulfilledVotes (user,songid,value,date) VALUES (?,?,?,DATE('now'))"""
 #         xbmc.log("SPQR Trying to insert:"+sqlText)
          c = conn.cursor()
          c.execute(sqlText,(user,songid,value))

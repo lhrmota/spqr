@@ -222,7 +222,7 @@ function createPlaylistEntry(item) {
 	musicNameDiv.appendChild(musicNameHeader);
 	var musicNameArtist = document.createElement("p");
 	musicNameArtist.innerHTML = item.albumartist[0];
-	for (var i = 1; i != item.albumartist.length; i++)
+	for (var i = 1; i < item.albumartist.length; i++)
 		musicNameArtist.innerHTML += ", " + item.albumartist[i];
 	musicNameDiv.appendChild(musicNameArtist);
 	var musicNameAlbum = document.createElement("p");
