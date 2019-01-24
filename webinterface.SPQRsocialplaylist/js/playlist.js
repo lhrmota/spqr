@@ -141,9 +141,6 @@ function updateVotes(data) {
 		//console.log("Updating votes:downCount" + key)
 		if(downVoteSpan) downVoteSpan.innerHTML = downVotes[key];
 	}
-
-	refreshMyVotes();
-
 }
 
 function updateCurrentSong(item) {
@@ -186,7 +183,7 @@ function addPlaylistData(jsonData) {
 		table.appendChild(newRow);
 	}
 
-
+   
 	// Refresh current song--- Can only be done after receiving the playlist
 	sendCurrentSongUpdateRequest();
 }
@@ -271,7 +268,7 @@ function createPlaylistEntry(item) {
 	// push to global playlist	
 	playlistItems.push(newPlaylistItem);
 
-	requestVotesUpdate();
+	
 
 	return musicInfoDiv;
 }
@@ -324,6 +321,10 @@ function createMenuForSong(songid) {
     return menu;
 }
 */
+
+// This was being called a lot of times... That might be causing BD locks
+// Removed it to see how things go... 
+// Must rethink when this must be called
 function requestVotesUpdate() {
 	send_message(ws, "Addons.ExecuteAddon", {
 		"addonid": "script.SPQR.receiveStatementsFromUser",
@@ -338,6 +339,7 @@ function requestVotesUpdate() {
 function upvote(songId) {
 	myUpVotes.push(songId);
 	//	console.log("Upvoting:"+songId);
+	refreshMyVotes();
 	send_message(ws, "Addons.ExecuteAddon", {
 		"addonid": "script.SPQR.receiveStatementsFromUser",
 		"params": {
@@ -350,6 +352,7 @@ function upvote(songId) {
 
 function downvote(songId) {
 	myDownVotes.push(songId);
+	refreshMyVotes();
 	//	console.log("Downvoting:"+songId);
 	send_message(ws, "Addons.ExecuteAddon", {
 		"addonid": "script.SPQR.receiveStatementsFromUser",

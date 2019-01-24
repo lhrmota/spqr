@@ -61,7 +61,7 @@ def moveVotesToPastVotes(conn):
       cur.execute("""DELETE FROM unfulfilledVotes """)
       cur.execute("""DELETE FROM fulfilledVotes """)
       conn.commit()       
-    
+      cur.close()
    except Error as e:
       xbmc.log("SPQR Error: moveVotesToPastVotes failed: "+' '.join(e)) 
    
@@ -205,6 +205,7 @@ def orderVotes(conn):
    rows = cur.fetchall()
  #  for row in rows:
 #      xbmc.log("SPQR new playlist Row:"+' '.join(map(str,row)))
+   cur.close()
    return rows
 	       
 def moveCurrentSongsVotesToFulfilledVotes(conn,songid):
@@ -215,7 +216,7 @@ def moveCurrentSongsVotesToFulfilledVotes(conn,songid):
         str(EventMonitor.songIndex)+""" AS songorder, date FROM unfulfilledVotes WHERE songid=? """,(songid,))
       cur.execute("""DELETE FROM unfulfilledVotes WHERE songid=? """,(songid,))
       conn.commit()       
-    
+      cur.close()
    except Error as e:
       xbmc.log("SPQR Error: movePresentSongsVotesToFulfilledVotes failed: "+' '.join(e))
       
@@ -252,51 +253,58 @@ def setupDB():
        xbmc.log("SPQR DB file:"+database)
        
        # create a database connection
-       conn = sqlite3.connect(database)
+       conn = sqlite3.connect(database, timeout=10)
        if conn is None:
            xbmc.log("SPQR Error: cannot create the database connection.")
        else:
-          createDbTables(conn)
+          if tablesNotCreated(conn):
+             createDbTables(conn)
           # to be used outside this function
           return conn
    except Error as e:
        xbmc.log("SPQR Error: setupDB failed: "+' '.join(e))
+       
+def tablesNotCreated(conn):
+   """ Check if necessary tables were already created 
+    :param conn: Connection object"""
+   # from https://stackoverflow.com/questions/17044259/python-how-to-check-if-table-exists
+   # and https://stackoverflow.com/questions/1601151/how-do-i-check-in-sqlite-whether-a-table-exists
+   dbcur = conn.cursor()
+   dbcur.execute("""
+       SELECT COUNT(*)
+       FROM sqlite_master WHERE type='table' AND name= 'unfulfilledVotes'""")
+   if dbcur.fetchone()[0] == 1:
+       dbcur.close()
+       return False
 
-
-def create_table(conn, create_table_sql):
-    """ create a table from the create_table_sql statement
-    :param conn: Connection object
-    :param create_table_sql: a CREATE TABLE statement
-    :return:
-    """
-    try:
-        c = conn.cursor()
-        c.execute(create_table_sql)
-        conn.commit()
-    except Error as e:
-      xbmc.log("SPQR Error: cannot create table:"+' '.join(e))
+   dbcur.close()
+   return True
  
 def createDbTables(conn):
+    cur = conn.cursor()
     # value should be 1 or -1, depending on being up or downvote. No booleans in SQLite! 
     sql_create_unfulfilledvotes_table = """ CREATE TABLE IF NOT EXISTS unfulfilledVotes (
              user TEXT NOT NULL,
              songid INTEGER NOT NULL,
              value INTEGER NOT NULL,
              date TEXT NOT NULL);"""
-    create_table(conn, sql_create_unfulfilledvotes_table)
+    cur.execute(sql_create_unfulfilledvotes_table)
     sql_create_fulfilledvotes_table = """CREATE TABLE IF NOT EXISTS fulfilledVotes (
              user TEXT NOT NULL,
              songid INTEGER NOT NULL,
              value INTEGER NOT NULL,
              songorder INTEGER NOT NULL,
              date TEXT NOT NULL); """
-    create_table(conn, sql_create_fulfilledvotes_table)
+    cur.execute(sql_create_fulfilledvotes_table)
     sql_create_pastvotes_table = """CREATE TABLE IF NOT EXISTS pastVotes (
              user text NOT NULL,
              songid integer NOT NULL,
              value integer NOT NULL,
              date TEXT NOT NULL); """
-    create_table(conn, sql_create_pastvotes_table)
+    cur.execute( sql_create_pastvotes_table)
+    conn.commit()
+    c.close()
+    xbmc.log("SPQR created tables") 
            
 # Launch point
 if __name__ == '__main__':

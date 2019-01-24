@@ -13,7 +13,7 @@ import json
 def setupDB():
     database = os.path.join(profile_dir,"spqr.db")
     	
-    xbmc.log("SPQR DB file:"+database)
+#    xbmc.log("SPQR DB file:"+database)
  
     # create a database connection
     conn = create_connection(database)
@@ -31,7 +31,7 @@ def create_connection(db_file):
     :return: Connection object or None
     """
     try:
-     conn = sqlite3.connect(db_file)
+     conn = sqlite3.connect(db_file, timeout=10)
      return conn
     except Error as e:
       xbmc.log("SPQR Error: cannot create connection"+' '.join(e))
@@ -46,7 +46,7 @@ def insertVote(conn,songid,user,value):
    if conn is not None:
       try:	
          sqlText="""INSERT INTO unfulfilledVotes (user,songid,value,date) VALUES (?,?,?,DATE('now'))"""
-#         xbmc.log("SPQR Trying to insert:"+sqlText)
+         xbmc.log("SPQR Trying to insert:"+sqlText)
          c = conn.cursor()
          c.execute(sqlText,(user,songid,value))
          conn.commit()
@@ -54,7 +54,7 @@ def insertVote(conn,songid,user,value):
          notifyVotes(conn)
          # immediately deorder playlist? Maybe not, could cause instability with many users...
       except Error as e:
-         xbmc.log("SPQR Error: cannot insert into votes"+' '.join(e))
+         xbmc.log("SPQR Error: cannot insert into votes: "+' '.join(e))
    else:
       xbmc.log("SPQR Error: cannot insert into votes: no connection available")
 
@@ -121,7 +121,7 @@ if __name__ == '__main__':
    
 
    if "directive" in params:
-       #xbmc.log("SPQR Directive:"+params["directive"][0])
+       xbmc.log("SPQR Directive:"+params["directive"][0])
        conn=setupDB()
        if params["directive"][0]=="upvote":
           insertVote(conn,params["arg1"][0],params["arg2"][0],1)
@@ -136,4 +136,5 @@ if __name__ == '__main__':
                    getMyVotes(conn,params["arg1"][0])
                 else:
                    xbmc.log("SPQR Unexpected directive:"+params["directive"][0])
+       conn.close()
     
