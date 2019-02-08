@@ -31,7 +31,7 @@ def create_connection(db_file):
     :return: Connection object or None
     """
     try:
-     conn = sqlite3.connect(db_file, timeout=10)
+     conn = sqlite3.connect(db_file, timeout=30)
      return conn
     except Error as e:
       xbmc.log("SPQR Error: cannot create connection"+' '.join(e))
@@ -108,8 +108,8 @@ def getMyVotes(conn,user):
    except Error as e:
          xbmc.log("SPQR Error: getMyVotes failed: "+' '.join(e))
    
-# Launch point
 if __name__ == '__main__':
+# Launch point
    xbmc.log("SPQR Starting receive statements addon...")
 
    # Get profile dir
@@ -137,4 +137,4 @@ if __name__ == '__main__':
                 else:
                    xbmc.log("SPQR Unexpected directive:"+params["directive"][0])
        conn.close()
-    
+   xbmc.log("SPQR ending receive statements addon...")

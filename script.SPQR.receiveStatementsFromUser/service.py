@@ -15,8 +15,9 @@ class EventMonitor(xbmc.Player):
     
     # from forum.kodi.tv/showthread.php?tid338471
     def __init__ (self):
-        self.conn=setupDB()
-        moveVotesToPastVotes(self.conn)
+        conn=setupDB()
+        moveVotesToPastVotes(conn)
+        conn.close()
         monitor=xbmc.Monitor()
         xbmc.Player.__init__(self)
         xbmc.log("SPQR EventMonitor launched")
@@ -30,7 +31,9 @@ class EventMonitor(xbmc.Player):
     def onPlayBackStarted(self):
         xbmc.log("SPQR Spoted onPlayBackStarted")
         EventMonitor.songIndex+=1
-        reorderPlayList(self.conn)
+        conn=setupDB()
+        reorderPlayList(conn)
+        conn.close()
     
     def onQueueNextItem(self):
         xbmc.log("SPQR Spoted onQueueNextItem")
@@ -197,16 +200,19 @@ def orderVotes(conn):
      :param conn: DB connection"""
    # TODO think about a robust, meanibgfuk algorithm
    # initially, to test, very simple algorithm: count votes, adding 1 for up, 0.5 for down
-   cur = conn.cursor()
-   cur.execute("""DROP TABLE IF EXISTS tempVotes""")
-   cur.execute("""CREATE TEMP TABLE tempVotes AS SELECT songid, sum(value) AS votes FROM unfulfilledVotes WHERE value=1 GROUP BY songid """)
-   cur.execute("""INSERT INTO tempVotes SELECT songid, sum(value)*.5 AS votes FROM unfulfilledVotes WHERE value=-1 GROUP BY songid """)
-   cur.execute("""SELECT songid, sum(votes) AS score FROM tempVotes GROUP BY songid ORDER BY score DESC""")   
-   rows = cur.fetchall()
- #  for row in rows:
-#      xbmc.log("SPQR new playlist Row:"+' '.join(map(str,row)))
-   cur.close()
-   return rows
+   try:
+      cur = conn.cursor()
+      cur.execute("""DROP TABLE IF EXISTS tempVotes""")
+      cur.execute("""CREATE TEMP TABLE tempVotes AS SELECT songid, sum(value) AS votes FROM unfulfilledVotes WHERE value=1 GROUP BY songid """)
+      cur.execute("""INSERT INTO tempVotes SELECT songid, sum(value)*.5 AS votes FROM unfulfilledVotes WHERE value=-1 GROUP BY songid """)
+      cur.execute("""SELECT songid, sum(votes) AS score FROM tempVotes GROUP BY songid ORDER BY score DESC""")   
+      rows = cur.fetchall()
+      #for row in rows:
+      #   xbmc.log("SPQR new playlist Row:"+' '.join(map(str,row)))
+      cur.close()
+      return rows      
+   except Error as e:
+      xbmc.log("SPQR Error: orderVotes failed: "+' '.join(e))
 	       
 def moveCurrentSongsVotesToFulfilledVotes(conn,songid):
    xbmc.log("SPQR moving votes song #:"+str(songid))
@@ -303,7 +309,7 @@ def createDbTables(conn):
              date TEXT NOT NULL); """
     cur.execute( sql_create_pastvotes_table)
     conn.commit()
-    c.close()
+    cur.close()
     xbmc.log("SPQR created tables") 
            
 # Launch point

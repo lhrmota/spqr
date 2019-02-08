@@ -48,6 +48,7 @@ window.onload = function() {
 			console.log("Notification:" + JSON.stringify(j));
 			switch (j.method) {
 				case "Player.OnPlay":
+					// TODO should remove this function and do everything in addPlaylistData...
 					updateCurrentSong(j.params.data.item);
 					break;
 				case "Playlist.OnClear":
