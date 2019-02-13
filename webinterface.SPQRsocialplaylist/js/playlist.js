@@ -37,7 +37,7 @@ window.onload = function() {
 					break;
 				case "Player.GetItem":
 					// update current song
-					updateCurrentSong(j.result.item);
+					//updateCurrentSong(j.result.item);
 					break;
 				case "Addons.ExecuteAddon":
 					break;
@@ -49,7 +49,7 @@ window.onload = function() {
 			switch (j.method) {
 				case "Player.OnPlay":
 					// TODO should remove this function and do everything in addPlaylistData...
-					updateCurrentSong(j.params.data.item);
+					//updateCurrentSong(j.params.data.item);
 					break;
 				case "Playlist.OnClear":
 					addPlaylistData([]);
@@ -119,11 +119,11 @@ function requestPlaylistUpdate() {
 	}); // Get current playlist
 }
 
-function sendCurrentSongUpdateRequest() {
+/*function sendCurrentSongUpdateRequest() {
 	send_message(ws, "Player.GetItem", {
 		"playerid": 0
 	}); // Get song currently playing
-}
+}*/
 
 function updateVotes(data) {
 	console.log("Updating votes:" + JSON.stringify(data));
@@ -146,17 +146,15 @@ function updateVotes(data) {
 }
 
 function updateCurrentSong(item) {
-	// Search song info
-	for (var i = 0; playlistItems && i < playlistItems.length; i++)
-		if (playlistItems[i].id == item.id) {
-			document.getElementById("text-song-name").innerHTML = playlistItems[i].label;
-			if (playlistItems[i].albumartist)
-				document.getElementById("text-song-performer").innerHTML = playlistItems[i].albumartist[0];
-			// TODO add other artists
-			if (playlistItems[i].album)
-				document.getElementById("text-song-album").innerHTML = playlistItems[i].album;
-
-		}
+	console.log("Got CURRENT SONG:"+JSON.stringify(item));
+	
+	document.getElementById("text-song-name").innerHTML = item.label;
+	if (item.albumartist)
+		document.getElementById("text-song-performer").innerHTML = item.albumartist[0];
+	// TODO add other artists
+	if (item.album)
+		document.getElementById("text-song-album").innerHTML = item.album;
+	// TODO program progress bar update 	
 }
 
 function addPlaylistData(jsonData) {
@@ -179,15 +177,18 @@ function addPlaylistData(jsonData) {
 	var table = document.getElementById("music-box");
 	table.innerHTML = "";
 
+	// first line is dealt differently, as it has a special place and interface...
+	updateCurrentSong(jsonData[0]);
 	// ADD JSON DATA TO THE TABLE AS ROWS.
-	for (var i = 0; i < jsonData.length; i++) { // EXTRACT VALUE FOR HTML HEADER. 
+	for (var i = 1; i < jsonData.length; i++) {  
 		var newRow = createPlaylistEntry(jsonData[i]);
 		table.appendChild(newRow);
 	}
 
    
 	// Refresh current song--- Can only be done after receiving the playlist
-	sendCurrentSongUpdateRequest();
+	// Now done when receiving playlist data	
+	//sendCurrentSongUpdateRequest();
 }
 
 function createPlaylistEntry(item) {
