@@ -191,7 +191,7 @@ function addPlaylistData(jsonData) {
 }
 
 function createPlaylistEntry(item) {
-	console.log("SPQR creating playlist entry:"+JSON.stringify(item));
+	//console.log("SPQR creating playlist entry:"+JSON.stringify(item));
 
 	var newPlaylistItem = {};
 	newPlaylistItem.label = item.label;
@@ -222,9 +222,16 @@ function createPlaylistEntry(item) {
 	musicNameHeader.innerHTML = item.label;
 	musicNameDiv.appendChild(musicNameHeader);
 	var musicNameArtist = document.createElement("p");
-	musicNameArtist.innerHTML = item.albumartist[0];
-	for (var i = 1; i < item.albumartist.length; i++)
-		musicNameArtist.innerHTML += ", " + item.albumartist[i];
+	// sometimes album artist seems to be defined in 'albumartist', other times in 'artist'...
+	// Must check where the content is... Will prioritize 'albumartist'.
+	var artistsNames;
+	if(item.albumartist.length>0)
+		artistsNames=item.albumartist;
+	else 
+		artistsNames=item.artist;
+	musicNameArtist.innerHTML = artistsNames[0];
+	for (var i = 1; i < artistsNames.length; i++)
+		musicNameArtist.innerHTML += ", " + artistsNames[i];
 	musicNameDiv.appendChild(musicNameArtist);
 	var musicNameAlbum = document.createElement("p");
 	musicNameAlbum.innerHTML = item.album;
