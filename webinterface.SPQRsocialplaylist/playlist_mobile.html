@@ -30,40 +30,18 @@
 	<script src="js/playlist.js"></script>
 </head>
 <body >
-
-<!-- Layout adapted from https://www.youtube.com/watch?v=92yD3nOV1pk-->
-<div id="music-container" class="music-container">
-	<div id="music-header" class="music-header">
-		<a href="./settings.html" class="fa fa-cog"></a>
-		<i class="fa fa-search"></i>
-	</div>
-	<div id="music-playlist" class="music-playlist">		
-		<div  class="music-menu text-center">
-			<div class="menu">
-				<ul>
-					<li><a href="#" data-i18n="playlist">Playlist</a></li>
-					<li><a href="#" data-i18n="songs">Songs</a></li>
-					<li><a href="#" data-i18n="artists">Artists</a></li>
-					<li><a href="#" data-i18n="albums">Albums</a></li>
-					<li><a href="#" data-i18n="genres">Genres</a></li>
-				</ul>			
-			</div>
+	<!-- Layout adapted from https://www.youtube.com/watch?v=92yD3nOV1pk-->
+	<div id="music-container" class="music-container">
+		<div id="music-header" class="music-header">
+			<a href="./settings.html" class="fa fa-cog"></a>
+			<i class="fa fa-search"></i>
 		</div>
-		<div id="music-box" class="music-box">
-			<div class="music-info">
-				<div class="music-img">
-					<img src="images/PortugalVansLogo.png" alt="Logo" />				
-				</div>	
-				<div class="music-name"><h6>Song title</h6><p>Single name & Music director</p></div>
-				<i class="fa fa-ellipsis-v"></i>		
-			</div><hr>		
-	</div>
-</div>
-<div class="music-play">
-	  	<div class="play-image">
-	   	 <img id="img-playing-song" src="images/PortugalVansLogo.png" />
-	  	</div>
-	  	<div class="play-controls">
+		<h2 class="center-text">Now playing</h2>
+		<div class="music-play">
+	  		<div class="play-image">
+	   	 	<img id="img-playing-song" src="images/MaxPixel.freegreatpicture.com-Music-Icon-Button-Outline-Player-Play-Audio-2935460.svg" />
+	  		</div>
+	  		<div class="play-controls">
 	   	  <div class="controls">
 	      	 <div class="music-name">
 		  			<h5 id="text-song-name" data-i18n="nothing-playing">Nothing playing...</h5>
@@ -71,14 +49,36 @@
 		  			<p id="text-song-album"></p>	  
 	       	 </div>
 	     	  </div>
-	  </div>
-</div>
- <div class="music-progress">
-	    <div class="progress">
-	      <div id="progress-bar" class="progress-bar">
-		
-	      </div>
-	    </div>
-	  </div>
+	  		</div>
+		</div>
+ 		<div class="music-progress">
+	    	<div class="progress">
+	      	<div id="progress-bar" class="progress-bar">     </div>
+	    	</div>
+	  	</div>
+	  	<h2 class="center-text">Music browser</h2>
+		<div id="music-playlist" class="music-playlist">		
+			<div  class="music-menu text-center">
+				<div class="menu">
+					<ul>
+						<li><a href="#" data-i18n="playlist">Playlist</a></li>
+						<li><a href="#" data-i18n="songs">Songs</a></li>
+						<li><a href="#" data-i18n="artists">Artists</a></li>
+						<li><a href="#" data-i18n="albums">Albums</a></li>
+						<li><a href="#" data-i18n="genres">Genres</a></li>
+					</ul>			
+				</div>
+			</div>
+			<div id="music-box" class="music-box">
+				<div class="music-info">
+					<div class="music-img">
+						<img src="images/MaxPixel.freegreatpicture.com-Music-Icon-Button-Outline-Player-Play-Audio-2935460.svg" alt="Logo" />				
+					</div>	
+					<div class="music-name"><h6>Song title</h6><p>Single name & Music director</p></div>
+						<i class="fa fa-ellipsis-v"></i>		
+					</div><hr>		
+			</div>
+		</div>
+	</div>
 </body>
 </html>

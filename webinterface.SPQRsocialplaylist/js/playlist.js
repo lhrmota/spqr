@@ -9,7 +9,7 @@ window.onload = function() {
 	// Upon start
 	ws.onopen = function(event) {
 
-		sendPlaylistUpdateRequest();
+		requestPlaylistUpdate();
 
 		// If undefined, ask for alias... Maybe suggest a generated id?
 		console.log("userAlias" + userAlias);
@@ -60,7 +60,7 @@ window.onload = function() {
 				case "Playlist.OnAdd":
 				case "Playlist.OnRemove":
 					// this event is launched when a new song is added/removed... must update display
-					sendPlaylistUpdateRequest();
+					requestPlaylistUpdate();
 					break;
 				case "AudioLibrary.OnUpdate":
 					//TODO this is launched when playlist progresses to a new song
@@ -112,10 +112,10 @@ function setMyVotes(data) {
    myDownVotes=data.down;   
 }
 
-function sendPlaylistUpdateRequest() {
+function requestPlaylistUpdate() {
 	send_message(ws, "Playlist.GetItems", {
 		"playlistid": 0,
-		"properties": ["album", "albumartist"]
+		"properties": ["album", "albumartist","artist"]
 	}); // Get current playlist
 }
 
@@ -191,7 +191,7 @@ function addPlaylistData(jsonData) {
 }
 
 function createPlaylistEntry(item) {
-	//console.log(JSON.stringify(item));
+	console.log("SPQR creating playlist entry:"+JSON.stringify(item));
 
 	var newPlaylistItem = {};
 	newPlaylistItem.label = item.label;
@@ -205,10 +205,12 @@ function createPlaylistEntry(item) {
 	// Image... Use a default icon when nothing else is available	
 	var musicImgDiv = document.createElement("div");
 	musicImgDiv.className = "music-img";
-	var musicImg = document.createElement("i");
+	var musicImg = document.createElement("img");
 	musicImg.className = "fas fa-music";
 	musicImg.id = "img" + item.id;
+	musicImg.src="images/MaxPixel.freegreatpicture.com-Music-Icon-Button-Outline-Player-Play-Audio-2935460.svg";	
 	// TODO update image
+	
 
 	musicImgDiv.appendChild(musicImg);
 	musicInfoDiv.appendChild(musicImgDiv);
@@ -269,9 +271,7 @@ function createPlaylistEntry(item) {
     */
 	// push to global playlist	
 	playlistItems.push(newPlaylistItem);
-
 	
-
 	return musicInfoDiv;
 }
 
