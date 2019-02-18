@@ -23,5 +23,8 @@
 	"artists":"Artistas",
 	"albums":"Álbums",
 	"genres":"Géneros",
-	"user-alias-prompt":"Como pretende ser identificado (nome ou alcunha)?"
+	"user-alias-prompt":"Como pretende ser identificado (nome ou alcunha)?",
+	"now-playing":"A tocar:",
+	"playing-next":"A seguir:",
+	"artists":"Artistas"
 }

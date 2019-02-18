@@ -94,6 +94,44 @@ window.onload = function() {
 		}
 	}
 }
+function showPlaylist() {
+   clearMusicBox();
+   // highlight option   
+   document.getElementById("playlist-menu").className="menu-highlight";
+   requestPlaylistUpdate();
+}
+
+function clearMusicBox() {
+   document.getElementById("music-box").innerHTML="";
+   // also clear menu highlights
+   document.getElementById("playlist-menu").className="menu-normal";
+   document.getElementById("songs-menu").className="menu-normal";
+   document.getElementById("artists-menu").className="menu-normal";
+}
+
+
+
+function showArtists(){
+   clearMusicBox();
+   // highlight option   
+   document.getElementById("artists-menu").className="menu-highlight";
+   requestArtistsUpdate();
+}
+
+function requestArtistsUpdate() {
+   //TODO
+}
+
+function showSongs(){
+   clearMusicBox();
+   // highlight option   
+   document.getElementById("songs-menu").className="menu-highlight";
+   requestSongsUpdate();
+}
+
+function requestSongsUpdate() {
+   //TODO
+}
 
 function requestMyVotes() {
 	send_message(ws, "Addons.ExecuteAddon", {

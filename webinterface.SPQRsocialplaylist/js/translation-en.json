@@ -23,5 +23,8 @@
 	"artists":"Artists",
 	"albums":"Albums",
 	"genres":"Genres",
-	"user-alias-prompt":"Please choose a (nick)name"
+	"user-alias-prompt":"Please choose a (nick)name",
+	"now-playing":"Now playing:",
+	"playing-next":"Next playlist entries",
+	"artists":"Artists"
 }

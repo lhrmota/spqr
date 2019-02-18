@@ -57,7 +57,7 @@ body{
 }
 .menu{
 	width: 100%;
-	max-width: 550px;
+	max-width: 400px;
 	height: 32px;	
 	margin: 20px auto;
 	border-radius: 10px;
@@ -72,8 +72,15 @@ body{
 	display: inline-block;
 	border-right: 1px solid #fff;
 }
-.menu ul li a{
+.menu-highlight{
+   color: #000000;
+   background-color: #ddd;
+}
+.menu-normal{
 	color: #fff;
+   background-color: transparent;
+}
+.menu ul li a{
 	padding: 5px 15px;
 	text-decoration: none;
 	letter-spacing: 0.5px;
