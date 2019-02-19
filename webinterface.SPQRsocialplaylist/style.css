@@ -30,11 +30,12 @@ body{
 	margin-left: 10px;
 	cursor: pointer;
 }
-.music-header .fa-search{
+.music-header .fa-level-up{
 	float: right;
 	margin-top: 15px;
 	margin-right: 10px;
 	cursor: pointer;
+	visibility: hidden;
 }
 .music-header .title{
 	max-width: inherit;

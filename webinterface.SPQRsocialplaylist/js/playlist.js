@@ -1,4 +1,6 @@
-var ws, playlistItems, myUpVotes, myDownVotes;
+var ws, playlistItems, myUpVotes, myDownVotes,
+// store the artist currently being browsed
+browsedArtist;
 
 window.onload = function() {
 	loadSettingsCookies();
@@ -41,8 +43,13 @@ window.onload = function() {
 					break;
 				case "Addons.ExecuteAddon":
 					break;
+				case "AudioLibrary.GetArtists":
+				   if (j.result.artists) {
+				     displayArtistsData(j.result.artists);  
+				   }
+				  break;
 				default:
-					alert("Unexpected response:" + alert(JSON.stringify(j)));
+					alert("Unexpected response:" + JSON.stringify(j));
 			}
 		} else { // notification
 			console.log("Notification:" + JSON.stringify(j));
@@ -94,6 +101,76 @@ window.onload = function() {
 		}
 	}
 }
+
+function displayArtistsData(artists) {
+   console.log("# artists:"+artists.length);
+   var table = document.getElementById("music-box");
+   for (i=0; i<artists.length;i++) {
+      table.appendChild(createArtistEntry(artists[i]));
+   }
+}
+
+function createArtistEntry(artist) {
+	var musicInfoDiv = document.createElement("div");
+	musicInfoDiv.className = "music-info";
+
+	// Image... Use a default icon when nothing else is available	
+	var musicImgDiv = document.createElement("div");
+	musicImgDiv.className = "music-img";
+	var musicImg = document.createElement("i");
+	musicImg.className = "fa fa-microphone";
+	musicImg.id = "img" + artist.artistid;	
+	// TODO update image
+	
+
+	musicImgDiv.appendChild(musicImg);
+	musicInfoDiv.appendChild(musicImgDiv);
+
+	// artist info
+	var artistNameDiv = document.createElement("div");
+	artistNameDiv.className = "music-name";
+	var artistAnchor = document.createElement("a");
+	artistAnchor.href="javascript:requestArtistAlbums('"+artist.label+"')";
+	var artistNameHeader = document.createElement("h4");
+	artistNameHeader.innerHTML = artist.label;
+	artistAnchor.appendChild(artistNameHeader);
+	artistNameDiv.appendChild(artistAnchor);
+	musicInfoDiv.appendChild(artistNameDiv);
+/*
+	// Votes... Should have a vote at artist level?
+	var thumbsUpDiv = document.createElement("div");
+	var thumbsUpAnchor = document.createElement("a");
+	var thumbsUpSpan = document.createElement("span");
+	thumbsUpSpan.className = "glyphicon glyphicon-thumbs-up";
+	thumbsUpSpan.setAttribute("aria-hidden", true);
+	thumbsUpSpan.id = "thumbsup" + item.id;
+	thumbsUpAnchor.appendChild(thumbsUpSpan);
+	thumbsUpAnchor.href = "javascript:upvote(" + item.id + ");"
+	thumbsUpDiv.appendChild(thumbsUpAnchor);
+	var thumbsUpCountSpan = document.createElement("span");
+	thumbsUpCountSpan.className = "badge";
+	thumbsUpCountSpan.id = "upCount" + item.id;
+	thumbsUpCountSpan.innerHTML = "0";
+	thumbsUpDiv.appendChild(thumbsUpCountSpan);
+	musicInfoDiv.appendChild(thumbsUpDiv);
+	var thumbsDownDiv = document.createElement("div");
+	var thumbsDownAnchor = document.createElement("a");
+	var thumbsDownSpan = document.createElement("span");
+	thumbsDownSpan.className = "glyphicon glyphicon-thumbs-down";
+	thumbsDownSpan.setAttribute("aria-hidden", true);
+	thumbsDownSpan.id = "thumbsdown" + item.id;
+	thumbsDownAnchor.appendChild(thumbsDownSpan);
+	thumbsDownAnchor.href = "javascript:downvote(" + item.id + ");"
+	thumbsDownDiv.appendChild(thumbsDownAnchor);
+	var thumbsDownCountSpan = document.createElement("span");
+	thumbsDownCountSpan.className = "badge";
+	thumbsDownCountSpan.id = "downCount" + item.id;
+	thumbsDownCountSpan.innerHTML = "0";
+	thumbsDownDiv.appendChild(thumbsDownCountSpan);
+	musicInfoDiv.appendChild(thumbsDownDiv);*/
+		
+	return musicInfoDiv;
+}
 function showPlaylist() {
    clearMusicBox();
    // highlight option   
@@ -119,7 +196,32 @@ function showArtists(){
 }
 
 function requestArtistsUpdate() {
-   //TODO
+   // was there an artist being browsed before?
+   if(browsedArtist)
+      requestArtistAlbums(browsedArtist);
+   else 
+      requestAllArtists();
+}
+
+function showLevelUpIcon() {
+   document.getElementById("level-up-icon").visibility="visible";
+}
+
+function requestArtistAlbums(name) {
+   // update artist being browsed
+   browsedArtist=name;
+   // Can't manage to filter through artistID... Will do it through artist name...
+   send_message(ws, "AudioLibrary.GetAlbums", {
+       "filter": {"field": "artist", "operator": "contains", "value":browsedArtist}
+		//,		"properties": ["artist","artistid"]
+	});
+}
+
+function requestAllArtists() {
+   send_message(ws, "AudioLibrary.GetArtists", {
+		"albumartistsonly": true
+		//,		"properties": ["artist","artistid"]
+	});
 }
 
 function showSongs(){
@@ -217,18 +319,23 @@ function addPlaylistData(jsonData) {
 
 	// first line is dealt differently, as it has a special place and interface...
 	updateCurrentSong(jsonData[0]);
-	// ADD JSON DATA TO THE TABLE AS ROWS.
-	for (var i = 1; i < jsonData.length; i++) {  
-		var newRow = createPlaylistEntry(jsonData[i]);
-		table.appendChild(newRow);
+	
+	//Must check if playlist is being displayed... Only in that case will the other songs be shown.
+	if(showingPlaylist()){ 
+   	// ADD JSON DATA TO THE TABLE AS ROWS.
+	  for (var i = 1; i < jsonData.length; i++) {  
+	     	var newRow = createPlaylistEntry(jsonData[i]);
+		   table.appendChild(newRow);
+	  }
 	}
-
-   
 	// Refresh current song--- Can only be done after receiving the playlist
 	// Now done when receiving playlist data	
 	//sendCurrentSongUpdateRequest();
 }
 
+function showingPlaylist() {
+   return document.getElementById("playlist-menu").className=="menu-highlight";
+}
 function createPlaylistEntry(item) {
 	//console.log("SPQR creating playlist entry:"+JSON.stringify(item));
 
