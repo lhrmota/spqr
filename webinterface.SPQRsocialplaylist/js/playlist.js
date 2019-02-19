@@ -1,6 +1,8 @@
 var ws, playlistItems, myUpVotes, myDownVotes,
 // store the artist currently being browsed
-browsedArtist;
+browsedArtist,
+// store the album being browsed
+browsedAlbum;
 
 window.onload = function() {
 	loadSettingsCookies();
@@ -46,6 +48,11 @@ window.onload = function() {
 				case "AudioLibrary.GetArtists":
 				   if (j.result.artists) {
 				     displayArtistsData(j.result.artists);  
+				   }
+				  break;
+				  case "AudioLibrary.GetAlbums":
+				   if (j.result.albums) {
+				     displayAlbumData(j.result.albums);  
 				   }
 				  break;
 				default:
@@ -102,8 +109,52 @@ window.onload = function() {
 	}
 }
 
+function displayAlbumData(albums) {
+   showLevelUpIcon();
+   
+   console.log("# albums:"+albums.length);
+   
+   var table = document.getElementById("music-box");
+   table.innerHTML="";
+   for (i=0; i<albums.length;i++) {
+      table.appendChild(createAlbumEntry(albums[i]));
+   }
+}
+
+function createAlbumEntry(album) {
+	var musicInfoDiv = document.createElement("div");
+	musicInfoDiv.className = "music-info";
+
+	// Image... Use a default icon when nothing else is available	
+	var musicImgDiv = document.createElement("div");
+	musicImgDiv.className = "music-img";
+	var musicImg = document.createElement("i");
+	musicImg.className = "fa fa-microphone";
+	musicImg.id = "imgAlbum" + album.albumid;	
+	// TODO update image
+	
+
+	musicImgDiv.appendChild(musicImg);
+	musicInfoDiv.appendChild(musicImgDiv);
+
+	// album info
+	var albumNameDiv = document.createElement("div");
+	albumNameDiv.className = "music-name";
+	var albumAnchor = document.createElement("a");
+	albumAnchor.href="javascript:requestAlbumSongs("+album.albumid+")";
+	var albumNameHeader = document.createElement("h4");
+	albumNameHeader.innerHTML = album.label;
+	albumAnchor.appendChild(albumNameHeader);
+	albumNameDiv.appendChild(albumAnchor);
+	musicInfoDiv.appendChild(albumNameDiv);
+
+	// Votes... Should have a vote at album level? Not obvious... Probably not.
+	
+	return musicInfoDiv;
+}
 function displayArtistsData(artists) {
    console.log("# artists:"+artists.length);
+   
    var table = document.getElementById("music-box");
    for (i=0; i<artists.length;i++) {
       table.appendChild(createArtistEntry(artists[i]));
@@ -205,6 +256,13 @@ function requestArtistsUpdate() {
 
 function showLevelUpIcon() {
    document.getElementById("level-up-icon").visibility="visible";
+   //  add listener and trigger up navigation
+   if(!browsedAlbum)// No album selected, move back to root
+      document.getElementById("level-up-icon").href='showArtists();document.getElementById("level-up-icon").visibility="hidden";';
+   else{ // back to artist
+      browsedAlbum=undefined;
+      document.getElementById("level-up-icon").href='requestArtistAlbums(browsedArtist);';
+   }
 }
 
 function requestArtistAlbums(name) {
