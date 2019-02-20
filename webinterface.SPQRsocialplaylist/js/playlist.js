@@ -40,7 +40,7 @@ window.onload = function() {
 					break;
 				case "Player.GetItem":
 					// update current song
-					//updateCurrentSong(j.result.item);
+					updateCurrentSong(j.result.item);
 					break;
 				case "Addons.ExecuteAddon":
 					break;
@@ -66,8 +66,7 @@ window.onload = function() {
 			console.log("Notification:" + JSON.stringify(j));
 			switch (j.method) {
 				case "Player.OnPlay":
-					// TODO should remove this function and do everything in addPlaylistData...
-					//updateCurrentSong(j.params.data.item);
+					updateCurrentSong(j.params.data.item);
 					break;
 				case "Playlist.OnClear":
 					addPlaylistData([]);
@@ -455,6 +454,9 @@ function requestPlaylistUpdate() {
 	*/
 }
 function updateCurrentSong(item) {
+   // TODO: when called after receiving an OnPlay event, the only info available is the songid...
+   // Could try to get other info from the stored playlist data, or maybe should send a general update again, as new songs might 
+   // have been added...
 	console.log("Got CURRENT SONG:"+JSON.stringify(item));
 	
 	document.getElementById("text-song-name").innerHTML = item.label;
