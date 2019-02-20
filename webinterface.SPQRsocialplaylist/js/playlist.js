@@ -1,8 +1,8 @@
 var ws, playlistItems, myUpVotes, myDownVotes,
-// store the artist currently being browsed
-browsedArtist,
+// store the artist currently being browsed:  ID
+browsedArtistID,
 // store the album being browsed
-browsedAlbum;
+browsedAlbumID;
 
 window.onload = function() {
 	loadSettingsCookies();
@@ -22,8 +22,7 @@ window.onload = function() {
 			saveUserAlias();
 		}
 
-		// refresh myVotes with data from the DB
-		requestMyVotes();
+		
 	}
 
 	ws.onmessage = function(event) {
@@ -46,13 +45,18 @@ window.onload = function() {
 				case "Addons.ExecuteAddon":
 					break;
 				case "AudioLibrary.GetArtists":
-				   if (j.result.artists) {
+				   if (j.result) {
 				     displayArtistsData(j.result.artists);  
 				   }
 				  break;
-				  case "AudioLibrary.GetAlbums":
-				   if (j.result.albums) {
+				case "AudioLibrary.GetAlbums":
+				   if (j.result) {
 				     displayAlbumData(j.result.albums);  
+				   }
+				  break;
+				case "AudioLibrary.GetSongs":
+				   if (j.result) {
+				     displayAlbumSongs(j.result.songs);  
 				   }
 				  break;
 				default:
@@ -101,12 +105,27 @@ window.onload = function() {
 				case "Other.MyVotesUpdate":
 					setMyVotes(j.params.data)
 					break;
-					
+				case "Other.GeneralUpdate":
+				  updateAll(j.params.data)
+				  break;
 				default:
 					alert("Other method:" + JSON.stringify(event.data));
 			}
 		}
 	}
+}
+
+//////////////////////////////////
+// ALBUM BROWSING
+//////////////////////////////////
+function displayAlbumSongs(songs) {
+   var table = document.getElementById("music-box");
+   table.innerHTML="";
+   for (i=0; i<songs.length;i++) {
+      // must have songid as id, in order to use createPlaylistEntry
+      songs[i].id=songs[i].songid;
+      table.appendChild(createPlaylistEntry(songs[i],false,false));
+   } 
 }
 
 function displayAlbumData(albums) {
@@ -152,6 +171,17 @@ function createAlbumEntry(album) {
 	
 	return musicInfoDiv;
 }
+
+function requestAlbumSongs(albumid) {
+   // update album being browsed
+   browsedAlbumID=albumid;
+      
+   send_message(ws, "AudioLibrary.GetSongs", {
+       "filter": {"albumid": browsedAlbumID}
+       //,  "properties": ["songid"]
+	});
+}
+
 function displayArtistsData(artists) {
    console.log("# artists:"+artists.length);
    
@@ -181,7 +211,7 @@ function createArtistEntry(artist) {
 	var artistNameDiv = document.createElement("div");
 	artistNameDiv.className = "music-name";
 	var artistAnchor = document.createElement("a");
-	artistAnchor.href="javascript:requestArtistAlbums('"+artist.label+"')";
+	artistAnchor.href="javascript:requestArtistAlbums("+artist.artistid+")";
 	var artistNameHeader = document.createElement("h4");
 	artistNameHeader.innerHTML = artist.label;
 	artistAnchor.appendChild(artistNameHeader);
@@ -248,8 +278,8 @@ function showArtists(){
 
 function requestArtistsUpdate() {
    // was there an artist being browsed before?
-   if(browsedArtist)
-      requestArtistAlbums(browsedArtist);
+   if(browsedArtistID)
+      requestArtistAlbums(browsedArtistID);
    else 
       requestAllArtists();
 }
@@ -257,20 +287,20 @@ function requestArtistsUpdate() {
 function showLevelUpIcon() {
    document.getElementById("level-up-icon").visibility="visible";
    //  add listener and trigger up navigation
-   if(!browsedAlbum)// No album selected, move back to root
+   if(!browsedAlbumID)// No album selected, move back to root
       document.getElementById("level-up-icon").href='showArtists();document.getElementById("level-up-icon").visibility="hidden";';
    else{ // back to artist
-      browsedAlbum=undefined;
-      document.getElementById("level-up-icon").href='requestArtistAlbums(browsedArtist);';
+      browsedAlbumID=undefined;
+      document.getElementById("level-up-icon").href='requestArtistAlbums(browsedArtistID);';
    }
 }
 
-function requestArtistAlbums(name) {
+function requestArtistAlbums(artistid) {
    // update artist being browsed
-   browsedArtist=name;
+   browsedArtistID=artistid;
    // Can't manage to filter through artistID... Will do it through artist name...
    send_message(ws, "AudioLibrary.GetAlbums", {
-       "filter": {"field": "artist", "operator": "contains", "value":browsedArtist}
+       "filter": {"artistid":browsedArtistID}
 		//,		"properties": ["artist","artistid"]
 	});
 }
@@ -293,16 +323,10 @@ function requestSongsUpdate() {
    //TODO
 }
 
-function requestMyVotes() {
-	send_message(ws, "Addons.ExecuteAddon", {
-		"addonid": "script.SPQR.receiveStatementsFromUser",
-		"params": {
-			"directive": "getMyVotes",
-			"arg1": userAlias,
-			"arg2": ""
-		}
-	});
-}
+//////////////////////////////////
+// VOTES
+//////////////////////////////////
+
 
 function setMyVotes(data) {
    console.log("Got my votes:"+JSON.stringify(data));
@@ -310,14 +334,8 @@ function setMyVotes(data) {
    myDownVotes=data.down;   
 }
 
-function requestPlaylistUpdate() {
-	send_message(ws, "Playlist.GetItems", {
-		"playlistid": 0,
-		"properties": ["album", "albumartist","artist"]
-	}); // Get current playlist
-}
-
-/*function sendCurrentSongUpdateRequest() {
+/* Not necessary: comes as first playlist entry
+function sendCurrentSongUpdateRequest() {
 	send_message(ws, "Player.GetItem", {
 		"playerid": 0
 	}); // Get song currently playing
@@ -343,13 +361,112 @@ function updateVotes(data) {
 	}
 }
 
+// After updating the playlist, refresh display of own votes.
+function refreshMyVotes() {
+	console.log("Refreshing my votes:" + myUpVotes + ";" + myDownVotes);
+	for (var songid in myUpVotes) {
+		console.log("Refreshing up vote:" + "thumbsup" + myUpVotes[songid]);
+		if(document.getElementById("thumbsup" + myUpVotes[songid])) document.getElementById("thumbsup" + myUpVotes[songid]).style.color = "Lime";
+	}
+	for (var songid in myDownVotes)
+		if(document.getElementById("thumbsdown" + myDownVotes[songid])) document.getElementById("thumbsdown" + myDownVotes[songid]).style.color = "red";
+
+}
+
+// This was being called a lot of times... That might be causing BD locks
+// Removed it to see how things go... 
+// Must rethink when this must be called... Maybe never: votes should be broadcast each time a 
+// new vote is received by Kodi
+/*function requestVotesUpdate() {
+	send_message(ws, "Addons.ExecuteAddon", {
+		"addonid": "script.SPQR.receiveStatementsFromUser",
+		"params": {
+			"directive": "refreshVotes",
+			"arg1": "",
+			"arg2": ""
+		}
+	});
+}
+// This is probably also unnecessary: own votes are stored locally...
+// Maybe there will be a problem when page is refreshed or closed? Will try to receive these in initial info
+function requestMyVotes() {
+	send_message(ws, "Addons.ExecuteAddon", {
+		"addonid": "script.SPQR.receiveStatementsFromUser",
+		"params": {
+			"directive": "getMyVotes",
+			"arg1": userAlias,
+			"arg2": ""
+		}
+	});
+}*/
+
+function upvote(songId) {
+	myUpVotes.push(songId);
+	//	console.log("Upvoting:"+songId);
+	refreshMyVotes();
+	send_message(ws, "Addons.ExecuteAddon", {
+		"addonid": "script.SPQR.receiveStatementsFromUser",
+		"params": {
+			"directive": "upvote",
+			"arg1": songId.toString(),
+			"arg2": userAlias
+		}
+	});
+}
+
+function downvote(songId) {
+	myDownVotes.push(songId);
+	refreshMyVotes();
+	//	console.log("Downvoting:"+songId);
+	send_message(ws, "Addons.ExecuteAddon", {
+		"addonid": "script.SPQR.receiveStatementsFromUser",
+		"params": {
+			"directive": "downvote",
+			"arg1": songId.toString(),
+			"arg2": userAlias
+		}
+	});
+}
+
+////////////////////////////////////////////////
+// PLAYLIST DISPLAY
+////////////////////////////////////////////////
+function updateAll(data) {
+   addPlaylistData(data.playlist);
+   updateVotes(data.allVotes);
+   myUpVotes=data.myVotes.up;
+   myDownVotes=data.myVotes.down;
+   refreshMyVotes();
+}
+function requestPlaylistUpdate() {
+	send_message(ws, "Addons.ExecuteAddon", {
+		"addonid": "script.SPQR.receiveStatementsFromUser",
+		"params": {
+			"directive": "getPlaylist",
+			"arg1": userAlias,
+			"arg2": ""
+		}
+	});
+	// Was before:
+	/*"Playlist.GetItems", {
+		"playlistid": 0,
+		"properties": ["album", "albumartist","artist"]
+	}); // Get current playlist
+	*/
+}
 function updateCurrentSong(item) {
 	console.log("Got CURRENT SONG:"+JSON.stringify(item));
 	
 	document.getElementById("text-song-name").innerHTML = item.label;
-	if (item.albumartist)
-		document.getElementById("text-song-performer").innerHTML = item.albumartist[0];
-	// TODO add other artists
+	var artistsNames;
+   if(item.albumartist && item.albumartist.length>0)
+	  artistsNames=item.albumartist;
+	else 
+	  artistsNames=item.artist;
+	document.getElementById("text-song-performer").innerHTML = artistsNames[0];
+	for (var i = 1; i < artistsNames.length; i++)
+	  document.getElementById("text-song-performer").innerHTML += ", " + artistsNames[i];
+	
 	if (item.album)
 		document.getElementById("text-song-album").innerHTML = item.album;
 	// TODO program progress bar update 	
@@ -381,9 +498,18 @@ function addPlaylistData(jsonData) {
 	//Must check if playlist is being displayed... Only in that case will the other songs be shown.
 	if(showingPlaylist()){ 
    	// ADD JSON DATA TO THE TABLE AS ROWS.
-	  for (var i = 1; i < jsonData.length; i++) {  
-	     	var newRow = createPlaylistEntry(jsonData[i]);
-		   table.appendChild(newRow);
+	  for (var i = 1; i < jsonData.length; i++) {
+	     // Store in playlist
+	     var newPlaylistItem = {};
+	     newPlaylistItem.label = jsonData[i].label;
+	     newPlaylistItem.id = jsonData[i].id;
+	     newPlaylistItem.albumartist = jsonData[i].albumartist;
+        newPlaylistItem.album = jsonData[i].album;  
+        // push to global playlist	
+        playlistItems.push(newPlaylistItem);	     
+	     
+	     var newRow = createPlaylistEntry(jsonData[i],true,true);
+		  table.appendChild(newRow);
 	  }
 	}
 	// Refresh current song--- Can only be done after receiving the playlist
@@ -394,14 +520,10 @@ function addPlaylistData(jsonData) {
 function showingPlaylist() {
    return document.getElementById("playlist-menu").className=="menu-highlight";
 }
-function createPlaylistEntry(item) {
-	//console.log("SPQR creating playlist entry:"+JSON.stringify(item));
 
-	var newPlaylistItem = {};
-	newPlaylistItem.label = item.label;
-	newPlaylistItem.id = item.id;
-	newPlaylistItem.albumartist = item.albumartist;
-	newPlaylistItem.album = item.album;
+// showArtist,showAlbum are boolean, to decide if album and artist info is shown
+function createPlaylistEntry(item,showArtist,showAlbum) {
+	//console.log("SPQR creating playlist entry:"+JSON.stringify(item));
 
 	var musicInfoDiv = document.createElement("div");
 	musicInfoDiv.className = "music-info";
@@ -425,22 +547,25 @@ function createPlaylistEntry(item) {
 	var musicNameHeader = document.createElement("h6");
 	musicNameHeader.innerHTML = item.label;
 	musicNameDiv.appendChild(musicNameHeader);
-	var musicNameArtist = document.createElement("p");
-	// sometimes album artist seems to be defined in 'albumartist', other times in 'artist'...
-	// Must check where the content is... Will prioritize 'albumartist'.
-	var artistsNames;
-	if(item.albumartist.length>0)
-		artistsNames=item.albumartist;
-	else 
-		artistsNames=item.artist;
-	musicNameArtist.innerHTML = artistsNames[0];
-	for (var i = 1; i < artistsNames.length; i++)
-		musicNameArtist.innerHTML += ", " + artistsNames[i];
-	musicNameDiv.appendChild(musicNameArtist);
-	var musicNameAlbum = document.createElement("p");
-	musicNameAlbum.innerHTML = item.album;
-	musicNameDiv.appendChild(musicNameAlbum);
-
+	if(showArtist){
+   	var musicNameArtist = document.createElement("p");
+	  // sometimes album artist seems to be defined in 'albumartist', other times in 'artist'...
+	  // Must check where the content is... Will prioritize 'albumartist'.
+     var artistsNames;
+	  if(item.albumartist.length>0)
+	  	  artistsNames=item.albumartist;
+	  else 
+		  artistsNames=item.artist;
+	  musicNameArtist.innerHTML = artistsNames[0];
+	  for (var i = 1; i < artistsNames.length; i++)
+		 musicNameArtist.innerHTML += ", " + artistsNames[i];
+	  musicNameDiv.appendChild(musicNameArtist);
+	 }
+	 if(showAlbum){
+   	var musicNameAlbum = document.createElement("p");
+	   musicNameAlbum.innerHTML = item.album;
+	   musicNameDiv.appendChild(musicNameAlbum);
+   }
 	musicInfoDiv.appendChild(musicNameDiv);
 
 	// Votes...
@@ -480,23 +605,41 @@ function createPlaylistEntry(item) {
       musicInfoDiv.appendChild(ellipsisIcon);
     musicInfoDiv.appendChild(createMenuForSong(item.id));
     */
-	// push to global playlist	
-	playlistItems.push(newPlaylistItem);
+	
 	
 	return musicInfoDiv;
 }
 
-// After updating the playlist, refresh display of own votes.
-function refreshMyVotes() {
-	console.log("Refreshing my votes:" + myUpVotes + ";" + myDownVotes);
-	for (var songid in myUpVotes) {
-		console.log("Refreshing up vote:" + "thumbsup" + myUpVotes[songid]);
-		if(document.getElementById("thumbsup" + myUpVotes[songid])) document.getElementById("thumbsup" + myUpVotes[songid]).style.color = "Lime";
-	}
-	for (var songid in myDownVotes)
-		if(document.getElementById("thumbsdown" + myDownVotes[songid])) document.getElementById("thumbsdown" + myDownVotes[songid]).style.color = "red";
 
+
+/////////////////////////////////////////////////////
+// MESSAGES TRANSMISSION
+/////////////////////////////////////////////////////
+function send_message(webSocket, method, params, id) {
+	if (!id) id = method;
+	var msg = {
+		"jsonrpc": "2.0",
+		"method": method,
+		"id": id
+	};
+	if (params) {
+		msg.params = params;
+	}
+	console.log("Sending:" + JSON.stringify(msg))
+	webSocket.send(JSON.stringify(msg));
 }
+
+function sendNotify() {
+	send_message(ws, "JSONRPC.NotifyAll", {
+		"sender": "button",
+		"message": "Test notification",
+		"data": {
+			"item": "test"
+		}
+	});
+}
+
+
 // menu. Replaced by links on the thumbs
 /*
 function createMenuForSong(songid) {
@@ -534,69 +677,3 @@ function createMenuForSong(songid) {
     return menu;
 }
 */
-
-// This was being called a lot of times... That might be causing BD locks
-// Removed it to see how things go... 
-// Must rethink when this must be called
-function requestVotesUpdate() {
-	send_message(ws, "Addons.ExecuteAddon", {
-		"addonid": "script.SPQR.receiveStatementsFromUser",
-		"params": {
-			"directive": "refreshVotes",
-			"arg1": "",
-			"arg2": ""
-		}
-	});
-}
-
-function upvote(songId) {
-	myUpVotes.push(songId);
-	//	console.log("Upvoting:"+songId);
-	refreshMyVotes();
-	send_message(ws, "Addons.ExecuteAddon", {
-		"addonid": "script.SPQR.receiveStatementsFromUser",
-		"params": {
-			"directive": "upvote",
-			"arg1": songId.toString(),
-			"arg2": userAlias
-		}
-	});
-}
-
-function downvote(songId) {
-	myDownVotes.push(songId);
-	refreshMyVotes();
-	//	console.log("Downvoting:"+songId);
-	send_message(ws, "Addons.ExecuteAddon", {
-		"addonid": "script.SPQR.receiveStatementsFromUser",
-		"params": {
-			"directive": "downvote",
-			"arg1": songId.toString(),
-			"arg2": userAlias
-		}
-	});
-}
-
-function send_message(webSocket, method, params, id) {
-	if (!id) id = method;
-	var msg = {
-		"jsonrpc": "2.0",
-		"method": method,
-		"id": id
-	};
-	if (params) {
-		msg.params = params;
-	}
-	console.log("Sending:" + JSON.stringify(msg))
-	webSocket.send(JSON.stringify(msg));
-}
-
-function sendNotify() {
-	send_message(ws, "JSONRPC.NotifyAll", {
-		"sender": "button",
-		"message": "Test notification",
-		"data": {
-			"item": "test"
-		}
-	});
-}

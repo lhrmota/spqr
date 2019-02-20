@@ -7,7 +7,7 @@ import os
 import xbmcvfs
 import json
 import time
-   	
+import spqr_library	
 
 class EventMonitor(xbmc.Player):
     # song index to keep track of playing order (class attribute)
@@ -96,7 +96,7 @@ def reorderPlayList(conn):
    # songs will be organized in three sublists: first, songs with a positive score, second songs
    # with no votes, and, last, songs with negative votes
    # get songs in the current playlist
-   currentSongs=getCurrentPlaylist()
+   currentSongs=spqr_library.getCurrentPlaylist()
    #pop first one, as it is presently playing
    presentSong=currentSongs.pop()
    songsWithNoVotes=removeSongsWithVotes(currentSongs,scores)   
@@ -178,23 +178,6 @@ def existsSongWithId(id,scores):
          return True
    return False
    
-def getCurrentPlaylist():
-   """ get a list with the songs on the current playlist 
-   :return: list of tuples id, label, type"""
-   jsonRequest=xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Playlist.GetItems","id":"Playlist.GetItems","params":{"playlistid":0}}')    
-   try:
-#       xbmc.log("SPQR Request:"+jsonRequest)
-       response = json.loads(jsonRequest)
-   except UnicodeDecodeError:
-       response = json.loads(jsonRequest.decode('utf-8', 'ignore'))
-   #xbmc.log("SPQR json get Playlist:"+' '.join(dir(response.get("result").get("items"))))
-   #for song in response.get("result").get("items"):
-#      #xbmc.log("SPQR Playlist item:"+' '.join(song))
-#      for key in song:
-#         xbmc.log("SPQR Playlist item:"+key+"*"+str(song[key]))
-   	
-   return response.get("result").get("items")
-	
 def orderVotes(conn):
    """ compute new playlist according to votes on the db
      :param conn: DB connection"""

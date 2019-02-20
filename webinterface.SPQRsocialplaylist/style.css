@@ -91,11 +91,11 @@ body{
 }
 .music-box{
 	margin-right: 5px;
-	height: 100%;
-	max-height: 800px;
 	overflow: scroll;
 	overflow-x: hidden;
+	overflow-y:auto;
 	margin-top:10px;
+	margin-bottom: 0px;
 }
 .music-box::-webkit-scrollbar{
 	width: 0px;
