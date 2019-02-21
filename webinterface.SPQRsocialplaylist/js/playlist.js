@@ -33,14 +33,16 @@ window.onload = function() {
 			switch (j.id) {
 				case "Playlist.GetItems":
 					//	update playlist
-					if (j.result.items) {
+					// Ignoring: data received as GeneralUpdate
+					/*if (j.result.items) {
 						//console.log("got playlist:"+JSON.stringify(j));
 						addPlaylistData(j.result.items);
-					}
+					}*/
 					break;
 				case "Player.GetItem":
 					// update current song
-					updateCurrentSong(j.result.item);
+					// Ignoring: data received as GeneralUpdate, sent after each playlist change
+					//updateCurrentSong(j.result.item);
 					break;
 				case "Addons.ExecuteAddon":
 					break;
@@ -63,24 +65,28 @@ window.onload = function() {
 					alert("Unexpected response:" + JSON.stringify(j));
 			}
 		} else { // notification
-			console.log("Notification:" + JSON.stringify(j));
+			console.log("Notification:" + j.method);
 			switch (j.method) {
 				case "Player.OnPlay":
-					updateCurrentSong(j.params.data.item);
+					// Ignoring: data received as GeneralUpdate, sent after each playlist change
+					//	updateCurrentSong(j.params.data.item);
 					break;
 				case "Playlist.OnClear":
 					addPlaylistData([]);
 					break;
 				case "Player.OnStop":
 					//alert("PLAYER STOPPED");
+					clearCurrentSong();
 					break;
 				case "Playlist.OnAdd":
 				case "Playlist.OnRemove":
 					// this event is launched when a new song is added/removed... must update display
-					requestPlaylistUpdate();
+					// Ignoring: data received as GeneralUpdate, sent after each playlist change
+					//	requestPlaylistUpdate();
 					break;
 				case "AudioLibrary.OnUpdate":
-					//TODO this is launched when playlist progresses to a new song
+					// this is launched when playlist progresses to a new song
+					// Ignoring: data received as GeneralUpdate, sent after each playlist change
 				case "Application.OnVolumeChanged":
 				case "GUI.OnScreensaverDeactivated":
 				case "GUI.OnScreensaverActivated":
@@ -101,9 +107,10 @@ window.onload = function() {
 				case "Other.VoteUpdate":
 					updateVotes(j.params.data)
 					break;
-				case "Other.MyVotesUpdate":
+			/*	case "Other.MyVotesUpdate":
+				   // is this ever received? Don't think so...
 					setMyVotes(j.params.data)
-					break;
+					break;*/
 				case "Other.GeneralUpdate":
 				  updateAll(j.params.data)
 				  break;
@@ -433,9 +440,12 @@ function downvote(songId) {
 function updateAll(data) {
    addPlaylistData(data.playlist);
    updateVotes(data.allVotes);
-   myUpVotes=data.myVotes.up;
-   myDownVotes=data.myVotes.down;
-   refreshMyVotes();
+   // will only update when votes are present and refer to my user alias 
+   if(data.user && data.user==userAlias){
+      myUpVotes=data.myVotes.up;
+      myDownVotes=data.myVotes.down;
+      refreshMyVotes();
+   }
 }
 function requestPlaylistUpdate() {
 	send_message(ws, "Addons.ExecuteAddon", {
@@ -453,25 +463,29 @@ function requestPlaylistUpdate() {
 	}); // Get current playlist
 	*/
 }
+
+function clearCurrentSong() {
+	document.getElementById("text-song-name").innerHTML = $.i18n("nothing-playing");
+	document.getElementById("text-song-performer").innerHTML ="";
+	document.getElementById("text-song-album").innerHTML = "";
+}
 function updateCurrentSong(item) {
-   // TODO: when called after receiving an OnPlay event, the only info available is the songid...
-   // Could try to get other info from the stored playlist data, or maybe should send a general update again, as new songs might 
-   // have been added...
 	console.log("Got CURRENT SONG:"+JSON.stringify(item));
+	if(item){
+		document.getElementById("text-song-name").innerHTML = item.label;
+		var artistsNames;
+   	if(item.albumartist && item.albumartist.length>0)
+	  		artistsNames=item.albumartist;
+		else 
+	  		artistsNames=item.artist;
+		document.getElementById("text-song-performer").innerHTML = artistsNames[0];
+		for (var i = 1; i < artistsNames.length; i++)
+	  		document.getElementById("text-song-performer").innerHTML += ", " + artistsNames[i];
 	
-	document.getElementById("text-song-name").innerHTML = item.label;
-	var artistsNames;
-   if(item.albumartist && item.albumartist.length>0)
-	  artistsNames=item.albumartist;
-	else 
-	  artistsNames=item.artist;
-	document.getElementById("text-song-performer").innerHTML = artistsNames[0];
-	for (var i = 1; i < artistsNames.length; i++)
-	  document.getElementById("text-song-performer").innerHTML += ", " + artistsNames[i];
-	
-	if (item.album)
-		document.getElementById("text-song-album").innerHTML = item.album;
-	// TODO program progress bar update 	
+		if (item.album)
+			document.getElementById("text-song-album").innerHTML = item.album;
+		// TODO program progress bar update
+	} 	
 }
 
 function addPlaylistData(jsonData) {
@@ -496,6 +510,7 @@ function addPlaylistData(jsonData) {
 
 	// first line is dealt differently, as it has a special place and interface...
 	updateCurrentSong(jsonData[0]);
+	removeCurrentSongFromMyVotes(jsonData[0]);
 	
 	//Must check if playlist is being displayed... Only in that case will the other songs be shown.
 	if(showingPlaylist()){ 
@@ -517,6 +532,26 @@ function addPlaylistData(jsonData) {
 	// Refresh current song--- Can only be done after receiving the playlist
 	// Now done when receiving playlist data	
 	//sendCurrentSongUpdateRequest();
+}
+
+function removeCurrentSongFromMyVotes(songData) {
+	var indexToRemove=-1;
+	for(var i=0; myUpVotes && i!=myUpVotes.length;i++)
+		if(myUpVotes[i]==songData.id){
+			indexToRemove=i;
+			break;
+		}
+	if(indexToRemove!=-1)
+		myUpVotes.splice(indexToRemove, 1);
+	
+	indexToRemove=-1;
+	for(i=0; myDownVotes && i!=myDownVotes.length;i++)
+		if(myDownVotes[i]==songData.id){
+			indexToRemove=i;
+			break;
+		}
+	if(indexToRemove!=-1)
+		myDownVotes.splice(indexToRemove, 1);
 }
 
 function showingPlaylist() {

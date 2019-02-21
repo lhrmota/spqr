@@ -32,7 +32,9 @@ class EventMonitor(xbmc.Player):
         xbmc.log("SPQR Spoted onPlayBackStarted")
         EventMonitor.songIndex+=1
         conn=setupDB()
-        reorderPlayList(conn)
+        idList=reorderPlayList(conn)
+        alterPlayList(idList)
+        spqr_library.sendPlaylist(conn,"none")
         conn.close()
     
     def onQueueNextItem(self):
@@ -45,7 +47,7 @@ class EventMonitor(xbmc.Player):
         xbmc.log("SPQR Spoted onPlayBackStopped ")
         
     def onPlayBackSeekChapter(self):
-        xbmc.log("SPQR Spoted  onPlayBackSeekChapter")
+        xbmc.log("SPQR Spoted onPlayBackSeekChapter")
 
 # Global vars
 previousSongId=None
@@ -69,7 +71,7 @@ def moveVotesToPastVotes(conn):
       xbmc.log("SPQR Error: moveVotesToPastVotes failed: "+' '.join(e)) 
    
 def reorderPlayList(conn):
-   """ will reorder playlist according to present votes.
+   """ will reorder playlist according to present votes. Song queued next will be kept on top of playlist
     :param conn: DB connection    """
    # Below does not work in v17: getDbId was only introduced in v18
    #infoTag=xbmc.Player().getMusicInfoTag()
@@ -86,10 +88,10 @@ def reorderPlayList(conn):
 
    global previousSongId 
    #xbmc.log("SPQR json getItem:"+' '.join(dir(response)))
-   xbmc.log("SPQR current song id:"+str(response.get("result").get("item").get("id"))+
+   xbmc.log("SPQR current song id:"+str(response.get("result").get("item").get("id"))+":"+response.get("result").get("item").get("label")+
       " previous:"+str(previousSongId))
-   
-   moveCurrentSongsVotesToFulfilledVotes(conn,response.get("result").get("item").get("id"))
+   presentSong=response.get("result").get("item").get("id")
+   moveCurrentSongsVotesToFulfilledVotes(conn,presentSong)
    removePreviousSongFromPlaylist()
    
    scores=orderVotes(conn)    
@@ -97,8 +99,10 @@ def reorderPlayList(conn):
    # with no votes, and, last, songs with negative votes
    # get songs in the current playlist
    currentSongs=spqr_library.getCurrentPlaylist()
-   #pop first one, as it is presently playing
-   presentSong=currentSongs.pop()
+   xbmc.log("SPQR current playlist length:"+str(len(currentSongs))+" first:"+currentSongs[0].get("label")+":"+str(currentSongs[0].get("id")))
+   #remove presently playing song
+   removePresentSong(currentSongs,presentSong)
+   xbmc.log("SPQR current playlist length after removing:"+str(len(currentSongs))+" first:"+currentSongs[0].get("label")+":"+str(currentSongs[0].get("id")))
    songsWithNoVotes=removeSongsWithVotes(currentSongs,scores)   
    
    # duplicate list, will then be filtered
@@ -108,27 +112,29 @@ def reorderPlayList(conn):
    xbmc.log("SPQR: positiveScores:"+' '.join(map(str,positiveScores)))
    xbmc.log("SPQR: negativeScores:"+' '.join(map(str,negativeScores)))
    
-   alterPlayList(presentSong,positiveScores,songsWithNoVotes,negativeScores)
-   
-   # is this really needed? Al least to avoid removing first song from playlist at the beginning...
-   previousSongId=response.get("result").get("item").get("id")
-    
-def alterPlayList(presentSong,positiveScores,songsWithNoVotes,negativeScores):
-   """ apply new Playlist order. first, songs with a positive score, second songs
-    with no votes, and, last, songs with negative votes
-    :param presentSong: id of the currently playing song
-    :param positiveScores: list of lists with elements id and score, the latter always positive
-    :param songsWithNoVotes: list of tuples id, label, type 
-    :param negativeScores:list of lists with elements id and score, the latter always negative"""
-   # could modify Playlist through JSON RPC, has add, insert, remove and swap operations?
-   # will first try to simply clear playlist and create a new one
-   
    # concatenate different lists
    idList=[presentSong];
    idList.extend([score[0] for score in positiveScores]);
    idList.extend([song["id"] for song in songsWithNoVotes]);
    idList.extend([score[0] for score in negativeScores]);
    
+   # is this really needed? At least to avoid removing first song from playlist at the beginning...
+   previousSongId=response.get("result").get("item").get("id")
+   
+   return idList
+
+def removePresentSong(currentSongs,presentSong):
+    """ remove from currentSongs the entry with the ID in presentSong
+    :param currentSongs: song list
+    :param presentSong: currently playing song id"""
+    return [x for x in currentSongs if not x.get("id")==presentSong]
+	
+def alterPlayList(idList):
+   """ apply new Playlist order. first, songs with a positive score, second songs
+    with no votes, and, last, songs with negative votes
+    :param idList: song id list"""
+   # could modify Playlist through JSON RPC, has add, insert, remove and swap operations?
+   # will first try to simply clear playlist and create a new one
    #debug
    #for id in idList:
 #      xbmc.log("SPQR new song list item:"+str(id))
@@ -213,7 +219,7 @@ def removePreviousSongFromPlaylist():
   global previousSongId
   #will simply remove the first song... Which will be the one last played...
   if previousSongId!=None: # Will be None at the beginning...
-      xbmc.log("SPQR removing"+str(previousSongId))
+      xbmc.log("SPQR removing: "+str(previousSongId))
       jsonGetItemRequest=xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Playlist.Remove", "id":"Playlist.Remove","params":{"playlistid":0, "position":0}}')
       try:
 #        xbmc.log("SPQR Request:"+jsonGetItemRequest)
@@ -221,9 +227,9 @@ def removePreviousSongFromPlaylist():
       except UnicodeDecodeError:
         response = json.loads(jsonGetItemRequest.decode('utf-8', 'ignore'))
         
-      #xbmc.log("SPQR removing response:"+' '.join(dir(response)))
+      xbmc.log("SPQR removing response:"+' '.join(dir(response)))
   else:
-      xbmc.log("SPQR NOT removing"+str(previousSongId))
+      xbmc.log("SPQR NOT removing:"+str(previousSongId))
          
 # code from http://www.sqlitetutorial.net/sqlite-python/create-tables/
 def setupDB():
