@@ -6,7 +6,7 @@ from sqlite3 import Error
 
 def getCurrentPlaylist():
    """ get a list with the songs on the current playlist 
-   :return: list of tuples id, label, type"""
+   :return: dequeue of tuples id, label, type"""
    jsonRequest=xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Playlist.GetItems","id":"Playlist.GetItems","params":{"playlistid":0, "properties": ["album", "albumartist","artist"]}}')    
    try:
 #       xbmc.log("SPQR Request:"+jsonRequest)

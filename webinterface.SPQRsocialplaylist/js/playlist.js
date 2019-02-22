@@ -489,46 +489,48 @@ function updateCurrentSong(item) {
 }
 
 function addPlaylistData(jsonData) {
-	//reset playlist
-	playlistItems = [];
-
-	// function adapted from
-	// https://www.encodedna.com/javascript/populate-json-data-to-html-table-using-javascript.htm 
-	// EXTRACT VALUE FOR HTML HEADER.     
-	var col = [];
-	for (var i = 0; i < jsonData.length; i++) {
-		for (var key in jsonData[i]) {
-			if (col.indexOf(key) === -1) {
-				col.push(key);
-			}
-		}
-	}
-
-	// clear current playlist
-	var table = document.getElementById("music-box");
-	table.innerHTML = "";
-
-	// first line is dealt differently, as it has a special place and interface...
-	updateCurrentSong(jsonData[0]);
-	removeCurrentSongFromMyVotes(jsonData[0]);
-	
-	//Must check if playlist is being displayed... Only in that case will the other songs be shown.
-	if(showingPlaylist()){ 
-   	// ADD JSON DATA TO THE TABLE AS ROWS.
-	  for (var i = 1; i < jsonData.length; i++) {
-	     // Store in playlist
-	     var newPlaylistItem = {};
-	     newPlaylistItem.label = jsonData[i].label;
-	     newPlaylistItem.id = jsonData[i].id;
-	     newPlaylistItem.albumartist = jsonData[i].albumartist;
-        newPlaylistItem.album = jsonData[i].album;  
-        // push to global playlist	
-        playlistItems.push(newPlaylistItem);	     
-	     
-	     var newRow = createPlaylistEntry(jsonData[i],true,true);
-		  table.appendChild(newRow);
-	  }
-	}
+   if (jsonData) {
+   	//reset playlist
+   	playlistItems = [];
+   
+   	// function adapted from
+   	// https://www.encodedna.com/javascript/populate-json-data-to-html-table-using-javascript.htm 
+   	// EXTRACT VALUE FOR HTML HEADER.     
+   	var col = [];
+   	for (var i = 0; i < jsonData.length; i++) {
+   		for (var key in jsonData[i]) {
+   			if (col.indexOf(key) === -1) {
+   				col.push(key);
+   			}
+   		}
+   	}
+   
+   	// clear current playlist
+   	var table = document.getElementById("music-box");
+   	table.innerHTML = "";
+   
+   	// first line is dealt differently, as it has a special place and interface...
+   	updateCurrentSong(jsonData[0]);
+   	removeCurrentSongFromMyVotes(jsonData[0]);
+   	
+   	//Must check if playlist is being displayed... Only in that case will the other songs be shown.
+   	if(showingPlaylist()){ 
+      	// ADD JSON DATA TO THE TABLE AS ROWS.
+   	  for (var i = 1; i < jsonData.length; i++) {
+   	     // Store in playlist
+   	     var newPlaylistItem = {};
+   	     newPlaylistItem.label = jsonData[i].label;
+   	     newPlaylistItem.id = jsonData[i].id;
+   	     newPlaylistItem.albumartist = jsonData[i].albumartist;
+           newPlaylistItem.album = jsonData[i].album;  
+           // push to global playlist	
+           playlistItems.push(newPlaylistItem);	     
+   	     
+   	     var newRow = createPlaylistEntry(jsonData[i],true,true);
+   		  table.appendChild(newRow);
+   	  }
+   	}
+   }
 	// Refresh current song--- Can only be done after receiving the playlist
 	// Now done when receiving playlist data	
 	//sendCurrentSongUpdateRequest();
