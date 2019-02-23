@@ -9,7 +9,8 @@ window.onload = function() {
 	selectLanguage(lang);
 
 	// Create websocket
-	ws = new WebSocket('ws://' + kodiAddress + ':' + kodiPort + '/jsonrpc');
+	console.log("Connecting websocket to:"+'ws://' + window.location.hostname + ':' + kodiPort + '/jsonrpc');
+	ws = new WebSocket('ws://' + window.location.hostname + ':' + kodiPort + '/jsonrpc');
 	// Upon start
 	ws.onopen = function(event) {
 
@@ -168,6 +169,7 @@ function createAlbumEntry(album) {
 	var albumAnchor = document.createElement("a");
 	albumAnchor.href="javascript:requestAlbumSongs("+album.albumid+")";
 	var albumNameHeader = document.createElement("h4");
+	albumNameHeader.className = "music-name"
 	albumNameHeader.innerHTML = album.label;
 	albumAnchor.appendChild(albumNameHeader);
 	albumNameDiv.appendChild(albumAnchor);
@@ -269,7 +271,7 @@ function clearMusicBox() {
    document.getElementById("music-box").innerHTML="";
    // also clear menu highlights
    document.getElementById("playlist-menu").className="menu-normal";
-   document.getElementById("songs-menu").className="menu-normal";
+   //document.getElementById("songs-menu").className="menu-normal";
    document.getElementById("artists-menu").className="menu-normal";
 }
 
@@ -579,9 +581,10 @@ function createPlaylistEntry(item,showArtist,showAlbum) {
 	var musicImgDiv = document.createElement("div");
 	musicImgDiv.className = "music-img";
 	var musicImg = document.createElement("img");
-	musicImg.className = "fas fa-music";
+	musicImg.className = "fa fa-music";
 	musicImg.id = "img" + item.id;
-	musicImg.src="images/MaxPixel.freegreatpicture.com-Music-Icon-Button-Outline-Player-Play-Audio-2935460.svg";	
+	// wasn't showing in remote clients,,, Permissions seem ok...
+	musicImg.src="images/Play-Audio40.jpg";	
 	// TODO update image
 	
 
@@ -599,12 +602,12 @@ function createPlaylistEntry(item,showArtist,showAlbum) {
 	  // sometimes album artist seems to be defined in 'albumartist', other times in 'artist'...
 	  // Must check where the content is... Will prioritize 'albumartist'.
      var artistsNames;
-	  if(item.albumartist.length>0)
+	  if(item.albumartist && item.albumartist.length>0)
 	  	  artistsNames=item.albumartist;
 	  else 
 		  artistsNames=item.artist;
-	  musicNameArtist.innerHTML = artistsNames[0];
-	  for (var i = 1; i < artistsNames.length; i++)
+	  if(artistsNames && artistsNames.length>0) musicNameArtist.innerHTML = artistsNames[0];
+	  for (var i = 1; artistsNames && i < artistsNames.length; i++)
 		 musicNameArtist.innerHTML += ", " + artistsNames[i];
 	  musicNameDiv.appendChild(musicNameArtist);
 	 }
