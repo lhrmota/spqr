@@ -165,7 +165,6 @@ function createAlbumEntry(album) {
 
 	// album info
 	var albumNameDiv = document.createElement("div");
-	albumNameDiv.className = "music-name";
 	var albumAnchor = document.createElement("a");
 	albumAnchor.href="javascript:requestAlbumSongs("+album.albumid+")";
 	var albumNameHeader = document.createElement("h4");
@@ -220,7 +219,7 @@ function createArtistEntry(artist) {
 	artistNameDiv.className = "music-name";
 	var artistAnchor = document.createElement("a");
 	artistAnchor.href="javascript:requestArtistAlbums("+artist.artistid+")";
-	var artistNameHeader = document.createElement("h4");
+	var artistNameHeader = document.createElement("h5");
 	artistNameHeader.innerHTML = artist.label;
 	artistAnchor.appendChild(artistNameHeader);
 	artistNameDiv.appendChild(artistAnchor);
@@ -549,7 +548,7 @@ function addPlaylistData(jsonData) {
 function removeCurrentSongFromMyVotes(songData) {
 	var indexToRemove=-1;
 	for(var i=0; myUpVotes && i!=myUpVotes.length;i++)
-		if(myUpVotes[i]==songData.id){
+		if(songData && songData.id && myUpVotes[i]==songData.id){
 			indexToRemove=i;
 			break;
 		}

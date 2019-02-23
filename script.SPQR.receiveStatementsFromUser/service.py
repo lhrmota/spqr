@@ -101,7 +101,8 @@ def reorderPlayList(conn):
    
    # since next two songs are already fixed in playlist, remove their votes from the db
    moveSongsVotesToFulfilledVotes(conn,currentSongID)
-   moveSongsVotesToFulfilledVotes(conn,playlist[currentSongIndex+1]["id"])
+   ifcurrentSongIndex+1 < len(playlist):
+      moveSongsVotesToFulfilledVotes(conn,playlist[currentSongIndex+1]["id"])
       
    scores=orderVotes(conn)    
    
