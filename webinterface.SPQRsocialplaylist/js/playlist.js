@@ -407,31 +407,39 @@ function requestMyVotes() {
 }*/
 
 function upvote(songId) {
-	myUpVotes.push(songId);
-	//	console.log("Upvoting:"+songId);
-	refreshMyVotes();
-	send_message(ws, "Addons.ExecuteAddon", {
-		"addonid": "script.SPQR.receiveStatementsFromUser",
-		"params": {
-			"directive": "upvote",
-			"arg1": songId.toString(),
-			"arg2": userAlias
-		}
-	});
+   // TODO avoid duplicate votes by same user... Could simply check if already present? Will do so...
+   // Later one could cancel vote when clicking again...
+   if(!myUpVotes.includes(songId) ){	
+   	myUpVotes.push(songId);
+   	//	console.log("Upvoting:"+songId);
+   	refreshMyVotes();
+   	send_message(ws, "Addons.ExecuteAddon", {
+   		"addonid": "script.SPQR.receiveStatementsFromUser",
+   		"params": {
+   			"directive": "upvote",
+   			"arg1": songId.toString(),
+   			"arg2": userAlias
+   		}
+   	});
+   }
 }
 
 function downvote(songId) {
-	myDownVotes.push(songId);
-	refreshMyVotes();
-	//	console.log("Downvoting:"+songId);
-	send_message(ws, "Addons.ExecuteAddon", {
-		"addonid": "script.SPQR.receiveStatementsFromUser",
-		"params": {
-			"directive": "downvote",
-			"arg1": songId.toString(),
-			"arg2": userAlias
-		}
-	});
+   // TODO avoid duplicate votes by same user...  Could simply check if already present? Will do so...
+   // Later one could cancel vote when clicking again...
+	if(!myDownVotes.includes(songId) ){	
+   	myDownVotes.push(songId);
+   	refreshMyVotes();
+   	//	console.log("Downvoting:"+songId);
+   	send_message(ws, "Addons.ExecuteAddon", {
+   		"addonid": "script.SPQR.receiveStatementsFromUser",
+   		"params": {
+   			"directive": "downvote",
+   			"arg1": songId.toString(),
+   			"arg2": userAlias
+   		}
+   	});
+   }
 }
 
 ////////////////////////////////////////////////

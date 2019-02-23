@@ -53,7 +53,7 @@ def insertVote(conn,songid,user,value):
          conn.commit()
          # launch notification to update clients
          notifyVotes(conn)
-         # immediately deorder playlist? Maybe not, could cause instability with many users...
+         # immediately reorder playlist? Maybe not, could cause instability with many users...
       except Error as e:
          xbmc.log("SPQR Error: cannot insert into votes: "+' '.join(e))
    else:
