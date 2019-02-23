@@ -99,7 +99,7 @@ if __name__ == '__main__':
                    xbmc.log("SPQR Unexpected Directive")
                 else:
                    if params["directive"][0]=="getPlaylist":
-                      spqr_library.sendPlaylist(conn,params["arg1"][0])
+                      spqr_library.sendPlaylist(conn,None,None,params["arg1"][0])
                    else:
                       xbmc.log("SPQR Unexpected directive:"+params["directive"][0])
        conn.close()

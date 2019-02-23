@@ -21,14 +21,27 @@ def getCurrentPlaylist():
    	
    return response.get("result").get("items")
    
-def sendPlaylist(conn,user):
+def sendPlaylist(conn,currentSongIndex,playlist,user):
    """Send all relevant info to setup initial playlist display: send playlist, global votes and own votes. 
-   When broadcasting after playlist change, user will be 'none', and thus no own votes will be sent.
+   When broadcasting after playlist change, user will be 'none', and thus no own votes will be sent. Second and
+   third arguments might be None, in which case they need to be computed.
    :param conn: DB connection
+   :param currentSongIndex: index in playlist of the song being currently played 
+   :param playlist: all songs in current playlist
    :param user: the user id"""
    try:  
+      if playlist==None:
+         playlist=getCurrentPlaylist()
+         currentSong=getCurrentSong()
+         if "id" in currentSong:
+            currentSongIndex=findSongInPlaylist(playlist,currentSong["id"])
+            playlist[currentSongIndex:]
+         else:
+            currentSongIndex=-1
+            playlist=[]
+            
       jsonData={
-        "playlist":getCurrentPlaylist(),
+        "playlist":playlist[currentSongIndex:],
         "allVotes":getAllVotes(conn)}
       if user!="none":
       	jsonData["myVotes"]=getMyVotes(conn,user)
@@ -88,3 +101,24 @@ def getAllVotes(conn):
       return jsonData
    except Error as e:
          xbmc.log("SPQR Error: getAllVotes failed: "+' '.join(e))
+         
+def getCurrentSong():
+   jsonGetItemRequest=xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.GetItem","id":"Player.GetItem","params":{"playerid":0}}')    
+   try:
+#       xbmc.log("SPQR Request:"+jsonGetItemRequest)
+       response = json.loads(jsonGetItemRequest)
+   except UnicodeDecodeError:
+       response = json.loads(jsonGetItemRequest.decode('utf-8', 'ignore'))
+ 
+   #xbmc.log("SPQR json getItem:"+' '.join(dir(response)))
+   
+   return response.get("result").get("item")
+   
+def findSongInPlaylist(playlist,songID):
+   """ Find the index of the song with id in 2nd argument"""
+   for i in range(0,len(playlist)):
+      xbmc.log("SPQR findSongInPlaylist inspecting pos:"+str(i)+" id:"+str(playlist[i]["id"]))
+      if playlist[i]["id"]==songID:
+         return i
+    #should not happen! Maybe should throw exception, but don't know which, didn't see no IllegalArgumentException
+   return -1
