@@ -153,27 +153,49 @@ def alterPlayList(orderedPlaylist):
    playlist=orderedPlaylist["playlist"]
    
    # since two first songs should not be moved, will start changes a bit further
-   for idIndex in range(1,len(idList)-1):
-      if(idList[idIndex]!=playlist[currentSongIndex+idIndex]["id"]):
-         #will need to search for song and move to current position
-         songIndex=spqr_library.findSongInPlaylist(playlist,idList[idIndex])
-         # Will swap next position in playlist with songIndex. Maybe it could be more efficient
-         # to remove songIndex and insert here, shifting other elements, but that would require 
-         # an insert and a removal, which might corrupt the playlist...
-         xbmc.log("SPQR swaping. Cycle:"+str(idIndex)+"search:"+str(idList[idIndex])+"="
-         +" getting:"+str(songIndex)+"-"+str(playlist[songIndex]["id"])+"*"+playlist[songIndex]["label"].encode('utf-8')
-         +" to:"+str(currentSongIndex+idIndex)+"-"+str(playlist[currentSongIndex+idIndex]["id"])+"*"+
-         playlist[currentSongIndex+idIndex]["label"].encode('utf-8'))
-         jsonRequest=xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Playlist.Swap", '+
-           '"params": { "position1":'+str(currentSongIndex+idIndex)+',"position2":'+str(songIndex)+
-           ', "playlistid": 0 }, "id": 1}')    
-         # must also swap in local playlist
-         playlist[currentSongIndex+idIndex],playlist[songIndex]=playlist[songIndex],playlist[currentSongIndex+idIndex]
-         try:
-            response = json.loads(jsonRequest)
-         except UnicodeDecodeError:
-            response = json.loads(jsonRequest.decode('utf-8', 'ignore'))
-    
+   for idIndex in range(1,len(idList)):
+      # TODO was throwing an error of index ou of bounds....
+      if currentSongIndex+idIndex>=len(playlist):
+         xbmc.log("SPQR adding. Cycle:"+str(idIndex)+"search:"+str(idList[idIndex]))
+         addToPlaylist(playlist,currentSongIndex+idIndex,idList[idIndex])
+      else:    
+         if idList[idIndex]!=playlist[currentSongIndex+idIndex]["id"]:
+            #will need to search for song and move to current position
+            songIndex=spqr_library.findSongInPlaylist(playlist,idList[idIndex])
+            # if not found, must add to playlist
+            if songIndex==-1:
+               xbmc.log("SPQR adding. Cycle:"+str(idIndex)+"search:"+str(idList[idIndex]))
+               addToPlaylist(playlist,currentSongIndex+idIndex,idList[idIndex])
+            else:
+               # Will swap next position in playlist with songIndex. Maybe it could be more efficient
+               # to remove songIndex and insert here, shifting other elements, but that would require 
+               xbmc.log("SPQR swaping. Cycle:"+str(idIndex)+"search:"+str(idList[idIndex])+"="
+               # an insert and a removal, which might corrupt the playlist...
+               +" getting:"+str(songIndex)+"-"+str(playlist[songIndex]["id"])+"*"+playlist[songIndex]["label"].encode('utf-8')
+               +" to:"+str(currentSongIndex+idIndex)+"-"+str(playlist[currentSongIndex+idIndex]["id"])+"*"+
+               playlist[currentSongIndex+idIndex]["label"].encode('utf-8'))
+               jsonRequest=xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Playlist.Swap", '+
+                 '"params": { "position1":'+str(currentSongIndex+idIndex)+',"position2":'+str(songIndex)+
+                 ', "playlistid": 0 }, "id": 1}')    
+               # must also swap in local playlist
+               playlist[currentSongIndex+idIndex],playlist[songIndex]=playlist[songIndex],playlist[currentSongIndex+idIndex]
+               try:
+                  response = json.loads(jsonRequest)
+               except UnicodeDecodeError:
+                  response = json.loads(jsonRequest.decode('utf-8', 'ignore'))
+       
+def addToPlaylist(playlist,position,songID):
+   jsonRequest=xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Playlist.Insert", '+
+     '"params": { "position":'+str(position)+',"item":{"songid":'+str(songID)+
+     '}, "playlistid": 0 }, "id": 1}')    
+   # must also add to local playlist
+   playlist.insert(position,{"id":songID})
+   try:
+     response = json.loads(jsonRequest)
+   except UnicodeDecodeError:
+     response = json.loads(jsonRequest.decode('utf-8', 'ignore'))
+   
+          
 def splitScores(scores):
    """ filters the scores in the first argument, keeping positive scores. Negative scores are returned
    in new list

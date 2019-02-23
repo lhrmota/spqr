@@ -117,8 +117,8 @@ def getCurrentSong():
 def findSongInPlaylist(playlist,songID):
    """ Find the index of the song with id in 2nd argument"""
    for i in range(0,len(playlist)):
-      xbmc.log("SPQR findSongInPlaylist inspecting pos:"+str(i)+" id:"+str(playlist[i]["id"]))
+      #xbmc.log("SPQR findSongInPlaylist inspecting pos:"+str(i)+" id:"+str(playlist[i]["id"]))
       if playlist[i]["id"]==songID:
          return i
-    #should not happen! Maybe should throw exception, but don't know which, didn't see no IllegalArgumentException
+   #not found... 
    return -1
