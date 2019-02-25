@@ -119,6 +119,14 @@ body{
 	height: 60px;
 	display: flex;
 }
+.level-up span{
+   font-size: 24px;
+	font-weight: normal;
+	letter-spacing: 0.5px;
+	cursor: pointer;
+	line-height: 28px;
+	color: whitesmoke;
+}
 .music-img{
 	width: 50px;
 	height: 50px;
@@ -127,7 +135,8 @@ body{
 	width: 40px;
 	height: 40px;
 	margin: 2px 5px;
-	padding: 1px;
+	padding: 1px;	
+   border-radius:5px;
 }
 .music-name{
 	width: 95%;
@@ -150,6 +159,7 @@ body{
 	letter-spacing: 0.5px;
 	cursor: pointer;
 	line-height: 28px;
+	color: whitesmoke;
 }
 .music-name p{
 	font-size: 15px;

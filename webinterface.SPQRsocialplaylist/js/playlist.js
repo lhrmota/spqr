@@ -128,11 +128,29 @@ window.onload = function() {
 function displayAlbumSongs(songs) {
    var table = document.getElementById("music-box");
    table.innerHTML="";
+   
+   // Add top element to go up
+   var levelUpAnchor=document.createElement("a");
+   levelUpAnchor.className="level-up";
+   levelUpAnchor.href="javascript:goUpToArtistAlbums();";
+   var levelUp=document.createElement("i");
+   levelUp.id="level-up-icon";
+   levelUp.className="fa fa-level-up";
+   var levelUpSpan=document.createElement("span");
+   levelUpSpan.innerHTML="..";
+   levelUpAnchor.appendChild(levelUpSpan);   
+   levelUpAnchor.appendChild(levelUp);
+   table.appendChild(levelUpAnchor);
    for (i=0; i<songs.length;i++) {
       // must have songid as id, in order to use createPlaylistEntry
       songs[i].id=songs[i].songid;
       table.appendChild(createPlaylistEntry(songs[i],false,false));
    } 
+}
+
+function goUpToArtistAlbums() {
+   browsedAlbumID=false;
+   requestArtistAlbums(browsedArtistID);
 }
 
 function displayAlbumData(albums) {
@@ -142,11 +160,28 @@ function displayAlbumData(albums) {
    
    var table = document.getElementById("music-box");
    table.innerHTML="";
+   // Add top element to go up
+   var levelUpAnchor=document.createElement("a");
+   levelUpAnchor.className="level-up";
+   levelUpAnchor.href="javascript:goUpToArtists();";
+   var levelUp=document.createElement("i");
+   levelUp.id="level-up-icon";
+   levelUp.className="fa fa-level-up";
+   var levelUpSpan=document.createElement("span");
+   levelUpSpan.innerHTML="..";
+   levelUpAnchor.appendChild(levelUpSpan);   
+   levelUpAnchor.appendChild(levelUp);
+   table.appendChild(levelUpAnchor);
    for (i=0; i<albums.length;i++) {
       table.appendChild(createAlbumEntry(albums[i]));
    }
 }
 
+function goUpToArtists() {
+   showArtists();
+   browsedArtistID=false;
+   document.getElementById("level-up-icon").style.visibility="hidden";
+}
 function createAlbumEntry(album) {
 	var musicInfoDiv = document.createElement("div");
 	musicInfoDiv.className = "music-info";
@@ -154,9 +189,9 @@ function createAlbumEntry(album) {
 	// Image... Use a default icon when nothing else is available	
 	var musicImgDiv = document.createElement("div");
 	musicImgDiv.className = "music-img";
-	var musicImg = document.createElement("i");
-	musicImg.className = "fa fa-microphone";
+	var musicImg = document.createElement("img");
 	musicImg.id = "imgAlbum" + album.albumid;	
+	musicImg.src="images/music-icon40.png"
 	// TODO update image
 	
 
@@ -165,10 +200,10 @@ function createAlbumEntry(album) {
 
 	// album info
 	var albumNameDiv = document.createElement("div");
+	albumNameDiv.className = "music-name"
 	var albumAnchor = document.createElement("a");
 	albumAnchor.href="javascript:requestAlbumSongs("+album.albumid+")";
-	var albumNameHeader = document.createElement("h4");
-	albumNameHeader.className = "music-name"
+	var albumNameHeader = document.createElement("h5");
 	albumNameHeader.innerHTML = album.label;
 	albumAnchor.appendChild(albumNameHeader);
 	albumNameDiv.appendChild(albumAnchor);
@@ -205,9 +240,9 @@ function createArtistEntry(artist) {
 	// Image... Use a default icon when nothing else is available	
 	var musicImgDiv = document.createElement("div");
 	musicImgDiv.className = "music-img";
-	var musicImg = document.createElement("i");
-	musicImg.className = "fa fa-microphone";
+	var musicImg = document.createElement("img");
 	musicImg.id = "img" + artist.artistid;	
+	musicImg.src="images/music-icon40.png"
 	// TODO update image
 	
 
@@ -292,13 +327,13 @@ function requestArtistsUpdate() {
 }
 
 function showLevelUpIcon() {
-   document.getElementById("level-up-icon").visibility="visible";
+   document.getElementById("level-up-icon").style.visibility="visible";
    //  add listener and trigger up navigation
    if(!browsedAlbumID)// No album selected, move back to root
-      document.getElementById("level-up-icon").href='showArtists();document.getElementById("level-up-icon").visibility="hidden";';
+      document.getElementById("level-up-icon").href='javascript:goUpToArtists();'
    else{ // back to artist
-      browsedAlbumID=undefined;
-      document.getElementById("level-up-icon").href='requestArtistAlbums(browsedArtistID);';
+      browsedAlbumID=false;
+      document.getElementById("level-up-icon").href='javascript:goUpToArtistAlbums();';
    }
 }
 
