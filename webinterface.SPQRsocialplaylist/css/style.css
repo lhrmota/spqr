@@ -99,6 +99,7 @@ body{
 	border-right: none;
 }
 .music-box{
+   height: auto;
 	margin-right: 5px;
 	overflow: scroll;
 	overflow-x: hidden;
