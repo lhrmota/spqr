@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <category label="32001">
+        <setting label="Automatic DJ" type="bool"   id="autoDJ" default="true"/>
+        <setting label="Allow liking artists" type="bool" id="likeArtistAllowed" default="true"/>
+    </category>
+    <category label="Messages">
+        <setting label="Allow messages to DJ" type="bool"   id="messagesToDJallowed" default="true"/>
+        <setting label="Allow message broadcasting to all users" type="bool"   id="messagesToAllallowed" default="true"/>
+    </category>
+</settings>

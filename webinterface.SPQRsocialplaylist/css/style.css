@@ -8,6 +8,7 @@ body{
 	font-family: sans-serif;
 	width: 100%;
 	height: auto;
+	min-height: 100%;
 	max-width: 1200px;
 	display: block;
 	position: absolute;
@@ -59,7 +60,7 @@ body{
 }
 .music-playlist{
 	width: 100%;
-	height: 100%;
+	height: auto;
 }
 .music-menu{
 	width: 100%;
