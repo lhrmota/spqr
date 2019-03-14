@@ -257,38 +257,9 @@ function createArtistEntry(artist) {
 	artistAnchor.appendChild(artistNameHeader);
 	artistNameDiv.appendChild(artistAnchor);
 	musicInfoDiv.appendChild(artistNameDiv);
-/*
+
 	// Votes... Should have a vote at artist level?
-	var thumbsUpDiv = document.createElement("div");
-	var thumbsUpAnchor = document.createElement("a");
-	var thumbsUpSpan = document.createElement("span");
-	thumbsUpSpan.className = "glyphicon glyphicon-thumbs-up";
-	thumbsUpSpan.setAttribute("aria-hidden", true);
-	thumbsUpSpan.id = "thumbsup" + item.id;
-	thumbsUpAnchor.appendChild(thumbsUpSpan);
-	thumbsUpAnchor.href = "javascript:upvote(" + item.id + ");"
-	thumbsUpDiv.appendChild(thumbsUpAnchor);
-	var thumbsUpCountSpan = document.createElement("span");
-	thumbsUpCountSpan.className = "badge";
-	thumbsUpCountSpan.id = "upCount" + item.id;
-	thumbsUpCountSpan.innerHTML = "0";
-	thumbsUpDiv.appendChild(thumbsUpCountSpan);
-	musicInfoDiv.appendChild(thumbsUpDiv);
-	var thumbsDownDiv = document.createElement("div");
-	var thumbsDownAnchor = document.createElement("a");
-	var thumbsDownSpan = document.createElement("span");
-	thumbsDownSpan.className = "glyphicon glyphicon-thumbs-down";
-	thumbsDownSpan.setAttribute("aria-hidden", true);
-	thumbsDownSpan.id = "thumbsdown" + item.id;
-	thumbsDownAnchor.appendChild(thumbsDownSpan);
-	thumbsDownAnchor.href = "javascript:downvote(" + item.id + ");"
-	thumbsDownDiv.appendChild(thumbsDownAnchor);
-	var thumbsDownCountSpan = document.createElement("span");
-	thumbsDownCountSpan.className = "badge";
-	thumbsDownCountSpan.id = "downCount" + item.id;
-	thumbsDownCountSpan.innerHTML = "0";
-	thumbsDownDiv.appendChild(thumbsDownCountSpan);
-	musicInfoDiv.appendChild(thumbsDownDiv);*/
+	
 		
 	return musicInfoDiv;
 }
@@ -643,7 +614,7 @@ function createPlaylistEntry(item,showArtist,showAlbum) {
 	var thumbsUpDiv = document.createElement("div");
 	var thumbsUpAnchor = document.createElement("a");
 	var thumbsUpSpan = document.createElement("span");
-	thumbsUpSpan.className = "glyphicon glyphicon-thumbs-up";
+	thumbsUpSpan.className = "fa fa-thumbs-up";
 	thumbsUpSpan.setAttribute("aria-hidden", true);
 	thumbsUpSpan.id = "thumbsup" + item.id;
 	thumbsUpAnchor.appendChild(thumbsUpSpan);
@@ -658,7 +629,7 @@ function createPlaylistEntry(item,showArtist,showAlbum) {
 	var thumbsDownDiv = document.createElement("div");
 	var thumbsDownAnchor = document.createElement("a");
 	var thumbsDownSpan = document.createElement("span");
-	thumbsDownSpan.className = "glyphicon glyphicon-thumbs-down";
+	thumbsDownSpan.className = "fa fa-thumbs-down";
 	thumbsDownSpan.setAttribute("aria-hidden", true);
 	thumbsDownSpan.id = "thumbsdown" + item.id;
 	thumbsDownAnchor.appendChild(thumbsDownSpan);

@@ -224,6 +224,9 @@ hr{
 @keyframes width{
     100%{width:100%;}
 }
-.glyphicon{
+.fa-thumbs-down{
+    color:#ffffff
+}
+.fa-thumbs-up{
     color:#ffffff
 }
